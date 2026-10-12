@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MailCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { safeNext } from "@/lib/safe-next";
@@ -11,7 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/layout/logo";
 
 function LoginForm() {
+  const router = useRouter();
   const params = useSearchParams();
+  const [mode, setMode] = useState<"password" | "link">("password");
+  const [password, setPassword] = useState("");
   const next = safeNext(params.get("redirectTo"));
   const callbackError = params.get("error");
   const [email, setEmail] = useState("");
@@ -25,6 +28,17 @@ function LoginForm() {
     setState("sending");
     setError(null);
     const supabase = createSupabaseBrowserClient();
+    if (mode === "password") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError(error.message === "Invalid login credentials" ? "That email and password don't match." : error.message);
+        setState("idle");
+        return;
+      }
+      router.replace(next);
+      router.refresh();
+      return;
+    }
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
@@ -56,7 +70,17 @@ function LoginForm() {
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold">Sign in</h1>
-        <p className="mt-1 text-sm text-muted-foreground">We&apos;ll email you a link. No password needed.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {mode === "password" ? "Use your email and password." : "We'll email you a sign-in link. No password needed."}
+        </p>
+      </div>
+      <div role="tablist" aria-label="Sign-in method" className="grid grid-cols-2 rounded-lg bg-secondary p-1 text-sm">
+        {(["password", "link"] as const).map((m) => (
+          <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { setMode(m); setError(null); }}
+            className={`rounded-md py-1.5 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${mode === m ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+            {m === "password" ? "Password" : "Email link"}
+          </button>
+        ))}
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
@@ -70,9 +94,18 @@ function LoginForm() {
           placeholder="you@example.com"
         />
       </div>
+      {mode === "password" && (
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input id="password" type="password" autoComplete="current-password" required value={password}
+            onChange={(e) => setPassword(e.target.value)} />
+        </div>
+      )}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button type="submit" className="w-full" disabled={state === "sending"}>
-        {state === "sending" ? "Sending…" : "Email me a sign-in link"}
+        {mode === "password"
+          ? state === "sending" ? "Signing in…" : "Sign in"
+          : state === "sending" ? "Sending…" : "Email me a sign-in link"}
       </Button>
     </form>
   );

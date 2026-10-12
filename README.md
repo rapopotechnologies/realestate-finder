@@ -26,7 +26,7 @@ supabase/seed        Florida county registry
  Lake County appraiser ┘                                       └─ Storage (HUD photos)
 ```
 
-- **Everything is behind sign-in.** Owner details are shown, so the only public pages are the landing and login
+- **Everything is behind sign-in** (email + password, or an emailed magic link). Owner details are shown, so the only public pages are the landing and login
   pages. Every table has row-level security: reference data is read-only for signed-in users; saved
   properties, notes and contact lookups are private to each user.
 - **The service-role key never reaches the browser.** Only the scraper (GitHub secret) uses it.
@@ -84,7 +84,10 @@ Checks: `npm run lint && npm run typecheck && npm test` in `app/`.
    `http://localhost:3000/**`, your production URL `/**`, and previews
    (`https://off-market-finder-*-rapopotechnologies-projects.vercel.app/**`). Without these, magic links
    send people to the wrong place.
-6. **Admins:** emails in `public.admin_emails` become admins (the scrape runs page at `/admin`) when they sign
+6. **Passwords:** people can sign in with a password once one is set. Sign-up is still by magic link (it
+   confirms the email). An admin can set a password without any email from the Supabase dashboard
+   (*Authentication → Users → … → Send password recovery*, or update the user with the service-role key).
+7. **Admins:** emails in `public.admin_emails` become admins (the scrape runs page at `/admin`) when they sign
    in. Add one in the SQL editor: `insert into admin_emails values ('someone@example.com');`
    then `update profiles set is_admin = true where email = 'someone@example.com';` if they already signed up.
 
