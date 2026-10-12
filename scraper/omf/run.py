@@ -18,6 +18,7 @@ from omf.adapters.realauction import RealAuctionTaxDeed
 from omf.db import DB
 from omf.enrich import enrich_county
 from omf.geocode import geocode_pending
+from omf.hud_values import value_hud_homes
 from omf.photos import copy_hud_photos, streetview_check
 
 log = logging.getLogger("omf.run")
@@ -60,6 +61,7 @@ def taxdeeds(db: DB, only: list[str] | None) -> None:
 def hud(db: DB) -> None:
     states = sorted({c["state"] for c in db.select("counties", {"is_active": "is.true", "select": "state"})}) or ["FL"]
     run_adapter(db, HudHomeStore(states))
+    _step(db, "hud_values", None, value_hud_homes, db)
 
 
 def photos(db: DB) -> None:

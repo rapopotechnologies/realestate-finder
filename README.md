@@ -43,6 +43,7 @@ supabase/seed        Florida county registry
 | US Census batch geocoder | Map points for addresses | `scraper/omf/geocode.py` |
 | FL DOR statewide parcel centroids (+ Lake / Orange / Polk parcel layers) | Map points for vacant land with no street number | `scraper/omf/geocode.py` |
 | hudhomestore.gov | Listings by state: price, beds/baths, deadlines, FHA / 203(k), broker, photos | `scraper/omf/adapters/hud.py` |
+| FL DOR statewide cadastral layer | Market value for HUD homes (parcel under the listing's point) | `scraper/omf/hud_values.py` |
 | Census cartographic boundaries (1:500k) | State, county, city/town and ZIP (ZCTA) outlines | `scraper/omf/boundaries.py` |
 | Google Street View (optional) | Photos for tax deed properties: metadata only is stored; images are fetched on demand and never saved (Google's terms) | `scraper/omf/photos.py`, `app/app/api/streetview` |
 
@@ -141,8 +142,10 @@ cd scraper
 ```
 
 Deal score: `value_ratio = price ÷ market value` (opening bid for tax deeds, list price for HUD).
-"Great" < 15%, "Good" < 40%; `deal_score = 100 × (1 − ratio)`. HUD doesn't publish a market value, so HUD
-homes have no deal chip yet.
+"Great" < 15%, "Good" < 40%; `deal_score = 100 × (1 − ratio)`. HUD doesn't publish a market value, so
+`omf/hud_values.py` takes the just value of the tax-roll parcel under each HUD listing (Florida DOR statewide
+cadastral layer, matched on house number; ~88% of listings). HUD prices are usually near market value, so
+they rarely earn a chip, but they show an estimated value and sort correctly.
 
 ## Adding a county
 
