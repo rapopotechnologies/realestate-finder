@@ -3,9 +3,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarClock, ExternalLink, Gavel, Landmark } from "lucide-react";
 import { loadProperty } from "@/lib/property/load";
 import { dealTier, valueRatio } from "@/lib/deal";
-import { bathsLabel, daysUntil, longDate, money, number } from "@/lib/format";
-import { areaHref } from "@/lib/search/state";
-import { PROPERTY_TYPES } from "@/lib/search/state";
+import { bathsNumber, daysUntil, longDate, money, number } from "@/lib/format";
+import { areaHref, PROPERTY_TYPES } from "@/lib/search/state";
 import { skipTraceEnabled } from "@/lib/skip-trace";
 import { DealChip, SourceBadge } from "@/components/property/badges";
 import { Gallery } from "@/components/property/gallery";
@@ -19,6 +18,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   return { title: d?.property.address ?? "Property" };
 }
 
+// Same rule as listings_feed.is_closed (search_rpcs migration): keep the two in sync
 const CLOSED = /redeem|cancel|sold|struck|withdr|bankrupt|postpon/i;
 
 export default async function PropertyPage({ params }: { params: { id: string } }) {
@@ -40,7 +40,7 @@ export default async function PropertyPage({ params }: { params: { id: string } 
   const facts: [string, string][] = [
     ["Type", typeLabel],
     ["Beds", p.beds != null ? String(p.beds) : "—"],
-    ["Baths", bathsLabel(p.baths)?.replace(" ba", "") ?? "—"],
+    ["Baths", bathsNumber(p.baths) ?? "—"],
     ["Living area", p.sqft ? `${number(p.sqft)} sq ft` : "—"],
     ["Lot size", p.lot_size_sqft ? (p.lot_size_sqft >= 43560 ? `${(p.lot_size_sqft / 43560).toFixed(2)} acres` : `${number(Math.round(p.lot_size_sqft))} sq ft`) : "—"],
     ["Year built", p.year_built ? String(p.year_built) : "—"],
@@ -95,7 +95,7 @@ export default async function PropertyPage({ params }: { params: { id: string } 
             </p>
             {p.beds != null || p.sqft ? (
               <p className="text-sm text-muted-foreground">
-                {[p.beds != null ? `${p.beds} beds` : null, bathsLabel(p.baths)?.replace("ba", "baths"), p.sqft ? `${number(p.sqft)} sq ft` : null].filter(Boolean).join(" · ")}
+                {[p.beds != null ? `${p.beds} beds` : null, p.baths != null ? `${bathsNumber(p.baths)} baths` : null, p.sqft ? `${number(p.sqft)} sq ft` : null].filter(Boolean).join(" · ")}
               </p>
             ) : null}
           </section>

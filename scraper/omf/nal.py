@@ -146,7 +146,7 @@ def _int(v) -> int | None:
         return None
 
 
-def _street_key(s: str | None) -> str:
+def street_key(s: str | None) -> str:
     return re.sub(r"[^A-Z0-9]", "", (s or "").upper())
 
 
@@ -202,7 +202,7 @@ def to_owner(row: dict, property_id: str, tax_year: int) -> dict:
     phy, pzip = row.get("PHY_ADDR1"), (row.get("PHY_ZIPCD") or "").strip()[:5]
     absentee = None
     if mail1 and phy:
-        absentee = _street_key(row.get("OWN_ADDR1")) != _street_key(phy) or (bool(mzip and pzip) and mzip != pzip)
+        absentee = street_key(row.get("OWN_ADDR1")) != street_key(phy) or (bool(mzip and pzip) and mzip != pzip)
     elif mail1 and not phy:
         absentee = True  # vacant land with no site address: the owner lives elsewhere by definition
     return {
@@ -217,3 +217,19 @@ def to_owner(row: dict, property_id: str, tax_year: int) -> dict:
         "out_of_state": bool(mstate) and mstate not in ("FL", "FLORIDA"),
         "source": f"fl_dor_nal:{tax_year}",
     }
+
+
+QUALIFIED_SALE_CODES = ("01", "02", "03", "05", "06")
+
+
+def to_sales(row: dict) -> list[dict]:
+    """The roll's last two sales (SALE_*1, SALE_*2) as property_sales rows, without property_id."""
+    sales = []
+    for i in ("1", "2"):
+        yr, mo, price = _int(row.get(f"SALE_YR{i}")), _int(row.get(f"SALE_MO{i}")), _int(row.get(f"SALE_PRC{i}"))
+        if yr and price:
+            book_page = "/".join(x for x in (row.get(f"OR_BOOK{i}"), row.get(f"OR_PAGE{i}")) if x)
+            sales.append({"sale_date": f"{yr}-{(mo or 1):02d}-01", "price": price,
+                          "qualified": row.get(f"QUAL_CD{i}") in QUALIFIED_SALE_CODES,
+                          "book_page": book_page or None, "source": "fl_dor_nal"})
+    return sales

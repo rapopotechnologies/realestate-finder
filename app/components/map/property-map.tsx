@@ -1,24 +1,19 @@
 "use client";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import maplibregl, { type GeoJSONSource, type LngLatBoundsLike, type Map as MLMap } from "maplibre-gl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import maplibregl, { type GeoJSONSource, type LngLatBoundsLike, type Map as MLMap, type PointLike } from "maplibre-gl";
+import { type MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import { Layers, Minus, Plus } from "lucide-react";
+import { MAP_ACCENT, MAP_STYLE, milesToDegrees } from "@/lib/map";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Area, Layer, MapPoint } from "@/lib/search/types";
 import { cn } from "@/lib/utils";
 
-const TILE_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY;
-// MapTiler's light style when a key is set; otherwise OpenFreeMap (free, no key)
-const STYLE = TILE_KEY
-  ? `https://api.maptiler.com/maps/dataviz-light/style.json?key=${TILE_KEY}`
-  : "https://tiles.openfreemap.org/styles/positron";
-
 const COLORS = {
   great: "#1f7a4d", // --deal-great
   good: "#b45309", // --deal-good
-  other: "#0969a0", // accent
-  area: "#0969a0",
+  other: MAP_ACCENT,
+  area: MAP_ACCENT,
 };
 
 type BoundaryLayer = Exclude<Layer, "state">;
@@ -32,8 +27,7 @@ const empty: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: 
 
 function circlePolygon(lng: number, lat: number, miles: number, steps = 64): GeoJSON.Polygon {
   const coords: [number, number][] = [];
-  const dLat = miles / 69.0;
-  const dLng = miles / (69.0 * Math.cos((lat * Math.PI) / 180));
+  const { dLat, dLng } = milesToDegrees(miles, lat);
   for (let i = 0; i <= steps; i++) {
     const t = (i / steps) * 2 * Math.PI;
     coords.push([lng + dLng * Math.cos(t), lat + dLat * Math.sin(t)]);
@@ -62,7 +56,6 @@ export function PropertyMap(props: PropertyMapProps) {
   const [enabled, setEnabled] = useState<Record<BoundaryLayer, boolean>>({ county: true, place: true, zcta: false });
   const [layersOpen, setLayersOpen] = useState(false);
   const popup = useRef<maplibregl.Popup | null>(null);
-  const lastHover = useRef<string | null>(null);
   const fitTarget = useRef<LngLatBoundsLike | null>(null);
   const handlers = useRef({ onHover, onSelect, onAreaClick });
   handlers.current = { onHover, onSelect, onAreaClick };
@@ -72,7 +65,7 @@ export function PropertyMap(props: PropertyMapProps) {
     if (!container.current) return;
     const m = new maplibregl.Map({
       container: container.current,
-      style: STYLE,
+      style: MAP_STYLE,
       center: [-81.5, 28.4],
       zoom: 7,
       attributionControl: { compact: true },
@@ -139,8 +132,13 @@ export function PropertyMap(props: PropertyMapProps) {
       m.on("mouseenter", "clusters", () => (m.getCanvas().style.cursor = "pointer"));
       m.on("mouseleave", "clusters", () => (m.getCanvas().style.cursor = ""));
 
-      // Boundary hover (name + count) and click (filter to that shape). Finest layer wins.
+      // Boundary hover (name + count) and click (filter to that shape). Pins win; then the finest visible layer.
       const fillIds = [...BOUNDARY_LAYERS].reverse().map((b) => `b-${b.id}-fill`);
+      const pinAt = (pt: PointLike) => m.queryRenderedFeatures(pt, { layers: ["pin", "clusters"] }).length > 0;
+      const boundaryAt = (pt: PointLike) => {
+        const visible = fillIds.filter((id) => m.getLayer(id) && m.getLayoutProperty(id, "visibility") !== "none");
+        return m.queryRenderedFeatures(pt, { layers: visible })[0];
+      };
       let hovered: { source: string; id: string } | null = null;
       const clearHover = () => {
         if (hovered) m.setFeatureState(hovered, { hover: false });
@@ -148,9 +146,7 @@ export function PropertyMap(props: PropertyMapProps) {
         popup.current?.remove();
       };
       m.on("mousemove", (e) => {
-        if (m.queryRenderedFeatures(e.point, { layers: ["pin", "clusters"] }).length) { clearHover(); return; }
-        const visible = fillIds.filter((id) => m.getLayer(id) && m.getLayoutProperty(id, "visibility") !== "none");
-        const f = m.queryRenderedFeatures(e.point, { layers: visible })[0];
+        const f = pinAt(e.point) ? undefined : boundaryAt(e.point);
         if (!f) { clearHover(); return; }
         const next = { source: f.source, id: String(f.id) };
         if (!hovered || hovered.id !== next.id || hovered.source !== next.source) {
@@ -165,9 +161,8 @@ export function PropertyMap(props: PropertyMapProps) {
       });
       m.getCanvas().addEventListener("mouseleave", clearHover);
       m.on("click", (e) => {
-        if (m.queryRenderedFeatures(e.point, { layers: ["pin", "clusters"] }).length) return;
-        const visible = fillIds.filter((id) => m.getLayer(id) && m.getLayoutProperty(id, "visibility") !== "none");
-        const f = m.queryRenderedFeatures(e.point, { layers: visible })[0];
+        if (pinAt(e.point)) return; // the pin's own click handler selects it
+        const f = boundaryAt(e.point);
         if (f) handlers.current.onAreaClick(f.properties?.layer as Layer, String(f.properties?.geoid), String(f.properties?.label));
         else handlers.current.onSelect(null);
       });
@@ -228,8 +223,7 @@ export function PropertyMap(props: PropertyMapProps) {
       bounds = [[area.bbox[0], area.bbox[1]], [area.bbox[2], area.bbox[3]]];
       if (nearbyRadiusMi) {
         // Approximate "nearby" ring: the area's box grown by the radius
-        const dLat = nearbyRadiusMi / 69;
-        const dLng = nearbyRadiusMi / (69 * Math.cos((area.center[1] * Math.PI) / 180));
+        const { dLat, dLng } = milesToDegrees(nearbyRadiusMi, area.center[1]);
         const [w, s, e, n] = area.bbox;
         nearbySrc.setData({ type: "Feature", properties: {}, geometry: { type: "Polygon",
           coordinates: [[[w - dLng, s - dLat], [e + dLng, s - dLat], [e + dLng, n + dLat], [w - dLng, n + dLat], [w - dLng, s - dLat]]] } });
@@ -238,12 +232,10 @@ export function PropertyMap(props: PropertyMapProps) {
         nearbySrc.setData(empty);
       }
     } else if (point) {
-      const circle = circlePolygon(point.lng, point.lat, point.radiusMi);
-      areaSrc.setData({ type: "Feature", properties: {}, geometry: circle });
+      areaSrc.setData({ type: "Feature", properties: {}, geometry: circlePolygon(point.lng, point.lat, point.radiusMi) });
       nearbySrc.setData(empty);
-      const xs = circle.coordinates[0].map((c) => c[0]);
-      const ys = circle.coordinates[0].map((c) => c[1]);
-      bounds = [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]];
+      const { dLat, dLng } = milesToDegrees(point.radiusMi, point.lat);
+      bounds = [[point.lng - dLng, point.lat - dLat], [point.lng + dLng, point.lat + dLat]];
     } else {
       areaSrc.setData(empty);
       nearbySrc.setData(empty);
@@ -261,28 +253,14 @@ export function PropertyMap(props: PropertyMapProps) {
       features: points.map((p) => ({
         type: "Feature",
         geometry: { type: "Point", coordinates: [p.lng, p.lat] },
-        properties: { listing_id: p.listing_id, deal_tier: p.deal_tier ?? "none", source: p.source, price: p.price },
+        properties: { listing_id: p.listing_id, deal_tier: p.deal_tier ?? "none" },
       })),
     });
   }, [ready, points]);
 
-  // Hovering a card highlights its pin (and vice versa via onHover)
-  useEffect(() => {
-    const m = map.current;
-    if (!ready || !m) return;
-    if (lastHover.current) m.setFeatureState({ source: "pts", id: lastHover.current }, { hover: false });
-    if (hoveredId) m.setFeatureState({ source: "pts", id: hoveredId }, { hover: true });
-    lastHover.current = hoveredId;
-  }, [ready, hoveredId]);
-
-  const lastSelected = useRef<string | null>(null);
-  useEffect(() => {
-    const m = map.current;
-    if (!ready || !m) return;
-    if (lastSelected.current) m.setFeatureState({ source: "pts", id: lastSelected.current }, { selected: false });
-    if (selectedId) m.setFeatureState({ source: "pts", id: selectedId }, { selected: true });
-    lastSelected.current = selectedId;
-  }, [ready, selectedId]);
+  // Hovering a card highlights its pin (and vice versa via onHover); the selected pin stays enlarged
+  usePinState(map, ready, "hover", hoveredId);
+  usePinState(map, ready, "selected", selectedId);
 
   return (
     <div className={cn("relative h-full w-full", className)}>
@@ -323,6 +301,18 @@ export function PropertyMap(props: PropertyMapProps) {
       </div>
     </div>
   );
+}
+
+/** Keep one pin's feature-state flag (hover / selected) in sync with an id, clearing the previous pin */
+function usePinState(map: MutableRefObject<MLMap | null>, ready: boolean, flag: "hover" | "selected", id: string | null) {
+  const previous = useRef<string | null>(null);
+  useEffect(() => {
+    const m = map.current;
+    if (!ready || !m) return;
+    if (previous.current) m.setFeatureState({ source: "pts", id: previous.current }, { [flag]: false });
+    if (id) m.setFeatureState({ source: "pts", id }, { [flag]: true });
+    previous.current = id;
+  }, [map, ready, flag, id]);
 }
 
 function LegendDot({ color, label }: { color: string; label: string }) {

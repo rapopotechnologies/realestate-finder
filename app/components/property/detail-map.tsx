@@ -4,22 +4,18 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import maplibregl from "maplibre-gl";
 import { useEffect, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { MAP_ACCENT, MAP_STYLE } from "@/lib/map";
 import type { Area } from "@/lib/search/types";
-
-const TILE_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY;
-const STYLE = TILE_KEY
-  ? `https://api.maptiler.com/maps/dataviz-light/style.json?key=${TILE_KEY}`
-  : "https://tiles.openfreemap.org/styles/positron";
 
 /** The parcel point plus the outline of its city (or ZIP when it's unincorporated) */
 export function DetailMap({ lat, lng, placeGeoid, zip }: { lat: number; lng: number; placeGeoid: string | null; zip: string | null }) {
   const el = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!el.current) return;
-    const m = new maplibregl.Map({ container: el.current, style: STYLE, center: [lng, lat], zoom: 14,
+    const m = new maplibregl.Map({ container: el.current, style: MAP_STYLE, center: [lng, lat], zoom: 14,
       attributionControl: { compact: true }, dragRotate: false, cooperativeGestures: true });
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-    const marker = new maplibregl.Marker({ color: "#0969a0" }).setLngLat([lng, lat]).addTo(m);
+    const marker = new maplibregl.Marker({ color: MAP_ACCENT }).setLngLat([lng, lat]).addTo(m);
     // MapLibre labels the pin without a role; give it one so screen readers announce it
     marker.getElement().setAttribute("role", "img");
     marker.getElement().setAttribute("aria-label", "Property location");
@@ -31,8 +27,8 @@ export function DetailMap({ lat, lng, placeGeoid, zip }: { lat: number; lng: num
       const area = data as unknown as Area | null;
       if (!area || !m.getStyle()) return;
       m.addSource("area", { type: "geojson", data: { type: "Feature", properties: {}, geometry: area.geometry } });
-      m.addLayer({ id: "area-fill", type: "fill", source: "area", paint: { "fill-color": "#0969a0", "fill-opacity": 0.05 } });
-      m.addLayer({ id: "area-line", type: "line", source: "area", paint: { "line-color": "#0969a0", "line-width": 2, "line-dasharray": [2, 1.5] } });
+      m.addLayer({ id: "area-fill", type: "fill", source: "area", paint: { "fill-color": MAP_ACCENT, "fill-opacity": 0.05 } });
+      m.addLayer({ id: "area-line", type: "line", source: "area", paint: { "line-color": MAP_ACCENT, "line-width": 2, "line-dasharray": [2, 1.5] } });
     });
     return () => m.remove();
   }, [lat, lng, placeGeoid, zip]);

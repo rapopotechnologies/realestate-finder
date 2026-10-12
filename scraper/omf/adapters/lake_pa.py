@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 
 from omf.db import DB
 from omf.http import PoliteClient
-from omf.nal import normalize_parcel
+from omf.nal import normalize_parcel, owner_type, street_key
 
 log = logging.getLogger(__name__)
 
@@ -117,3 +117,45 @@ def lookup(db: DB, parcel_id: str, details_url: str | None = None) -> dict | Non
                                    "fetched_at": datetime.now(timezone.utc).isoformat()}],
               on_conflict="county_fips,parcel_id_norm")
     return data
+
+
+def fallback_fields(pa: dict) -> dict:
+    """Values to use when the parcel isn't in the DOR roll."""
+    fields = {
+        "market_value": pa.get("market_value"), "assessed_value": pa.get("assessed_value"),
+        "year_built": int(pa["year_built"]) if pa.get("year_built") else None,
+        "sqft": int(pa["living_area"]) if pa.get("living_area") else None,
+        "land_use": pa.get("land_use"),
+    }
+    return {k: v for k, v in fields.items() if v}
+
+
+def room_fields(pa: dict) -> dict:
+    """Bedrooms / bathrooms (half baths count 0.5) and the details link: the DOR roll has none of these."""
+    fields = {}
+    if pa.get("bedrooms"):
+        fields["beds"] = pa["bedrooms"]
+    baths = (pa.get("full_baths") or 0) + 0.5 * (pa.get("half_baths") or 0)
+    if baths:
+        fields["baths"] = baths
+    if pa.get("url"):
+        fields["appraiser_url"] = pa["url"]
+    return fields
+
+
+def to_owner(pa: dict, property_id: str, property_address: str | None) -> dict:
+    mail = split_mailing(pa.get("mailing"))
+    state = mail.get("mailing_state")
+    name = pa.get("owner_name") or ""
+    return {
+        "property_id": property_id,
+        "name": name or "Unknown",
+        "mailing_address": mail.get("mailing_address"),
+        "mailing_city": None,  # the page runs street and city together
+        "mailing_state": state,
+        "mailing_zip": mail.get("mailing_zip"),
+        "owner_type": owner_type(name),
+        "absentee": bool(property_address) and street_key(property_address) not in street_key(mail.get("mailing_address")),
+        "out_of_state": bool(state) and state != "FL",
+        "source": "lake_pa",
+    }

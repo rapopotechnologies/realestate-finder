@@ -166,9 +166,7 @@ class HudHomeStore(Adapter):
         }
 
     def save(self, db: DB, rows: list[dict]) -> int:
-        props = [r["property"] for r in rows]
-        keys = sorted({k for p in props for k in p})
-        saved = db.upsert("properties", [{k: p.get(k) for k in keys} for p in props], on_conflict="source_key", returning=True)
+        saved = db.upsert("properties", [r["property"] for r in rows], on_conflict="source_key", returning=True)
         ids = {s["source_key"]: s["id"] for s in saved}
         listings, photos = [], []
         for r in rows:

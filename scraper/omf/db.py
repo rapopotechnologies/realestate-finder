@@ -60,6 +60,9 @@ class DB:
     def upsert(self, table: str, rows: Iterable[dict], on_conflict: str, returning: bool = False,
                chunk: int = 500) -> list[dict]:
         rows = list(rows)
+        # PostgREST bulk inserts need the same keys in every row; missing ones become null
+        keys = sorted({k for r in rows for k in r})
+        rows = [{k: r.get(k) for k in keys} for r in rows]
         out: list[dict] = []
         for i in range(0, len(rows), chunk):
             r = self._call(

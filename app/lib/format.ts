@@ -49,7 +49,13 @@ export function daysUntil(iso: string | null | undefined): number | null {
   return Math.round((target - today.getTime()) / 86_400_000);
 }
 
-export function bathsLabel(b: number | null | undefined): string | null {
+/** 2 -> "2", 2.5 -> "2.5" */
+export function bathsNumber(b: number | null | undefined): string | null {
   if (b == null) return null;
-  return `${Number.isInteger(b) ? b : b.toFixed(1)} ba`;
+  return Number.isInteger(b) ? String(b) : b.toFixed(1);
+}
+
+export function bathsLabel(b: number | null | undefined): string | null {
+  const n = bathsNumber(b);
+  return n == null ? null : `${n} ba`;
 }
