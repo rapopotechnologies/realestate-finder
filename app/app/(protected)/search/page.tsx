@@ -1,10 +1,19 @@
+import { Suspense } from "react";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { SearchView } from "@/components/search/search-view";
+
 export const metadata = { title: "Search" };
 
-export default function SearchPage() {
+export default async function SearchPage() {
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("last_search").eq("id", user.id).maybeSingle()
+    : { data: null };
+  const last = typeof profile?.last_search === "string" ? profile.last_search : null;
   return (
-    <div className="container max-w-3xl py-16 text-center">
-      <h1 className="text-2xl font-semibold">Search is coming next</h1>
-      <p className="mt-2 text-muted-foreground">You&apos;re signed in. The map and property list arrive in the Search UI phase.</p>
-    </div>
+    <Suspense>
+      <SearchView lastSearch={last} />
+    </Suspense>
   );
 }

@@ -49,3 +49,9 @@
     text-wrap: balance;
   }
 }
+
+/* Map hover popup: match cards */
+.omf-popup .maplibregl-popup-content {
+  @apply rounded-lg border bg-card px-3 py-2 text-xs text-card-foreground shadow-md;
+}
+.omf-popup .maplibregl-popup-tip { display: none; }

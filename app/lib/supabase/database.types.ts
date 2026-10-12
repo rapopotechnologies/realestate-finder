@@ -81,6 +81,8 @@ export type Database = {
       auctions: {
         Row: {
           auction_date: string
+          appraiser_url: string | null
+          assessed_value: number | null
           auction_time: string | null
           auction_url: string | null
           case_no: string
@@ -100,6 +102,8 @@ export type Database = {
         }
         Insert: {
           auction_date: string
+          appraiser_url?: string | null
+          assessed_value?: number | null
           auction_time?: string | null
           auction_url?: string | null
           case_no: string
@@ -119,6 +123,8 @@ export type Database = {
         }
         Update: {
           auction_date?: string
+          appraiser_url?: string | null
+          assessed_value?: number | null
           auction_time?: string | null
           auction_url?: string | null
           case_no?: string
@@ -508,6 +514,7 @@ export type Database = {
           created_at: string
           height: number | null
           id: string
+          meta: Json | null
           property_id: string
           sort_order: number
           source: string
@@ -521,6 +528,7 @@ export type Database = {
           created_at?: string
           height?: number | null
           id?: string
+          meta?: Json | null
           property_id: string
           sort_order?: number
           source: string
@@ -534,6 +542,7 @@ export type Database = {
           created_at?: string
           height?: number | null
           id?: string
+          meta?: Json | null
           property_id?: string
           sort_order?: number
           source?: string
@@ -545,6 +554,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "photos_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_sales: {
+        Row: {
+          book_page: string | null
+          id: number
+          instrument: string | null
+          price: number | null
+          property_id: string
+          qualified: boolean | null
+          sale_date: string | null
+          source: string
+        }
+        Insert: {
+          book_page?: string | null
+          id?: never
+          instrument?: string | null
+          price?: number | null
+          property_id: string
+          qualified?: boolean | null
+          sale_date?: string | null
+          source: string
+        }
+        Update: {
+          book_page?: string | null
+          id?: never
+          instrument?: string | null
+          price?: number | null
+          property_id?: string
+          qualified?: boolean | null
+          sale_date?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_sales_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -595,6 +645,8 @@ export type Database = {
           land_use_code: string | null
           last_sale_date: string | null
           last_sale_price: number | null
+          lat: number | null
+          lng: number | null
           location: unknown
           location_unknown: boolean
           lot_size_sqft: number | null
@@ -625,6 +677,8 @@ export type Database = {
           land_use_code?: string | null
           last_sale_date?: string | null
           last_sale_price?: number | null
+          lat?: never
+          lng?: never
           location?: unknown
           location_unknown?: boolean
           lot_size_sqft?: number | null
@@ -655,6 +709,8 @@ export type Database = {
           land_use_code?: string | null
           last_sale_date?: string | null
           last_sale_price?: number | null
+          lat?: never
+          lng?: never
           location?: unknown
           location_unknown?: boolean
           lot_size_sqft?: number | null
@@ -828,7 +884,15 @@ export type Database = {
         }
         Returns: Json
       }
+      get_area: {
+        Args: { p_geoid?: string; p_label?: string; p_layer: string }
+        Returns: Json
+      }
       is_admin: { Args: never; Returns: boolean }
+      link_auctions_to_properties: {
+        Args: { p_county_fips?: string }
+        Returns: number
+      }
       normalize_parcel_id: { Args: { p: string }; Returns: string }
       refresh_property_areas: { Args: never; Returns: number }
       search_properties: {
