@@ -1,2 +1,3 @@
-// Replaced by generated types (database.types.ts) once the schema lands in the Database phase.
-export type Database = any;
+// Database types are generated: see database.types.ts. Hand-written shapes
+// for JSON columns and RPC payloads live below.
+export type { Database, Json, Tables, TablesInsert, TablesUpdate } from "./database.types";
