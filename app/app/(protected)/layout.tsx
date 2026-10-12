@@ -8,12 +8,15 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: updated } = await supabase.rpc("data_updated_at");
+  const [{ data: updated }, { data: isAdmin }] = await Promise.all([
+    supabase.rpc("data_updated_at"),
+    supabase.rpc("is_admin"),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header email={user.email ?? null} dataUpdated={timeAgo(updated as string | null)} />
-      <main className="flex-1">{children}</main>
+      <Header email={user.email ?? null} dataUpdated={timeAgo(updated as string | null)} isAdmin={!!isAdmin} />
+      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
     </div>
   );
 }

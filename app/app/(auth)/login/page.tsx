@@ -80,13 +80,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <main id="main" className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-8"><Logo /></div>
       <div className="w-full max-w-sm rounded-xl border bg-card p-6 shadow-sm">
         <Suspense>
           <LoginForm />
         </Suspense>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Heart } from "lucide-react";
+import { Activity, Heart } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import { SearchBox } from "@/components/search/search-box";
 
-export function Header({ email, dataUpdated }: { email: string | null; dataUpdated: string | null }) {
+export function Header({ email, dataUpdated, isAdmin = false }: { email: string | null; dataUpdated: string | null; isAdmin?: boolean }) {
   return (
     <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur">
       <div className="flex h-16 items-center gap-3 px-4 sm:gap-4 sm:px-6">
@@ -18,6 +18,11 @@ export function Header({ email, dataUpdated }: { email: string | null; dataUpdat
         <div className="flex-1 max-md:hidden" />
         {dataUpdated && (
           <span className="hidden whitespace-nowrap text-xs text-muted-foreground lg:inline">Data updated {dataUpdated}</span>
+        )}
+        {isAdmin && (
+          <Link href="/admin" className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Activity className="size-4" aria-hidden /> <span className="max-sm:sr-only">Admin</span>
+          </Link>
         )}
         <Link
           href="/my-list"

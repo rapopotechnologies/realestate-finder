@@ -19,7 +19,10 @@ export function DetailMap({ lat, lng, placeGeoid, zip }: { lat: number; lng: num
     const m = new maplibregl.Map({ container: el.current, style: STYLE, center: [lng, lat], zoom: 14,
       attributionControl: { compact: true }, dragRotate: false, cooperativeGestures: true });
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-    new maplibregl.Marker({ color: "#0969a0" }).setLngLat([lng, lat]).addTo(m);
+    const marker = new maplibregl.Marker({ color: "#0969a0" }).setLngLat([lng, lat]).addTo(m);
+    // MapLibre labels the pin without a role; give it one so screen readers announce it
+    marker.getElement().setAttribute("role", "img");
+    marker.getElement().setAttribute("aria-label", "Property location");
     m.on("load", async () => {
       const layer = placeGeoid ? "place" : zip ? "zcta" : null;
       const geoid = placeGeoid ?? zip;

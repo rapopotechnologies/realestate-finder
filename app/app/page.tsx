@@ -18,7 +18,7 @@ export default function LandingPage() {
           <Link href="/login">Sign in</Link>
         </Button>
       </header>
-      <main className="container max-w-4xl py-16 md:py-24">
+      <main id="main" className="container max-w-4xl py-16 md:py-24">
         <h1 className="text-4xl font-bold md:text-5xl">Find the properties that never make it to Zillow.</h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
           Tax deed auctions and HUD homes across Florida, updated every morning, on one map.
