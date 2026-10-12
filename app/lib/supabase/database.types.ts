@@ -19,6 +19,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_usage: {
+        Row: { api: string; month: string; requests: number }
+        Insert: { api: string; month: string; requests?: number }
+        Update: { api?: string; month?: string; requests?: number }
+        Relationships: []
+      }
       appraiser_cache: {
         Row: {
           county_fips: string
@@ -923,6 +929,7 @@ export type Database = {
         }[]
       }
       upsert_boundaries: { Args: { features: Json }; Returns: number }
+      use_api_quota: { Args: { p_api: string; p_limit: number }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

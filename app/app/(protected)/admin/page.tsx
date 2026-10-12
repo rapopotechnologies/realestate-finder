@@ -24,10 +24,13 @@ export default async function AdminPage() {
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin) notFound();
 
-  const [{ data: runs }, { data: counties }] = await Promise.all([
+  const month = new Date().toISOString().slice(0, 7) + "-01";
+  const [{ data: runs }, { data: counties }, { data: usage }] = await Promise.all([
     supabase.from("scrape_runs").select("*").order("started_at", { ascending: false }).limit(150),
     supabase.from("counties").select("fips, county_name, auction_platform, is_active, last_scraped_at, activated_at").eq("is_active", true).order("county_name"),
+    supabase.from("api_usage").select("requests").eq("api", "google_maps_images").eq("month", month).maybeSingle(),
   ]);
+  const googleLimit = Number(process.env.GOOGLE_MAPS_MONTHLY_LIMIT) || 10_000;
   const name = new Map((counties ?? []).map((c) => [c.fips, c.county_name]));
 
   return (
@@ -35,6 +38,10 @@ export default async function AdminPage() {
       <div>
         <h1 className="text-2xl font-semibold">Scrape runs</h1>
         <p className="text-sm text-muted-foreground">Daily at 6:00 AM Eastern (GitHub Actions). Newest first.</p>
+        <p className="mt-2 text-sm">
+          Google images this month: <span className="font-semibold tabular-nums">{(usage?.requests ?? 0).toLocaleString()}</span>
+          <span className="text-muted-foreground"> / {googleLimit.toLocaleString()} (then cards show the placeholder until the 1st)</span>
+        </p>
       </div>
 
       <section aria-labelledby="counties-heading">

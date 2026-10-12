@@ -4,6 +4,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 // Google Street View (or satellite) image for a tax deed property, fetched on demand.
 // Google's terms don't allow storing these images, so nothing is saved: the key stays on the
 // server and browsers keep the response only in their normal short-lived cache.
+// Every billable request counts against a monthly cap (GOOGLE_MAPS_MONTHLY_LIMIT, default 10,000);
+// past it, this returns 404 and the app shows its placeholder until the 1st of the month.
+const MONTHLY_LIMIT = Number(process.env.GOOGLE_MAPS_MONTHLY_LIMIT) || 10_000;
 export async function GET(request: Request, { params }: { params: { propertyId: string } }) {
   const key = process.env.GOOGLE_MAPS_API_KEY;
   if (!key) return new NextResponse(null, { status: 404 });
@@ -32,6 +35,9 @@ export async function GET(request: Request, { params }: { params: { propertyId: 
   }
   g.searchParams.set("size", size);
   g.searchParams.set("key", key);
+
+  const { data: allowed } = await supabase.rpc("use_api_quota", { p_api: "google_maps_images", p_limit: MONTHLY_LIMIT });
+  if (!allowed) return new NextResponse(null, { status: 404, headers: { "X-Quota": "exhausted" } });
 
   const img = await fetch(g);
   if (!img.ok) return new NextResponse(null, { status: 404 });

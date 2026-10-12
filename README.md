@@ -102,6 +102,7 @@ Current project: `xpvdodiadtycfyismcpl` (us-east-1).
 | | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon / publishable key (safe in the browser) |
 | | `NEXT_PUBLIC_MAPTILER_KEY` | optional; without it the map uses OpenFreeMap |
 | | `GOOGLE_MAPS_API_KEY` | optional, server only; Street View / satellite images |
+| | `GOOGLE_MAPS_MONTHLY_LIMIT` | optional; monthly cap on Google image requests (default 10000) |
 | | `SKIP_TRACE_PROVIDER`, `SKIP_TRACE_API_KEY` | optional, server only; "Find contact info" is off without them |
 | GitHub secrets + `scraper/.env` | `SUPABASE_URL` | same URL |
 | | `SUPABASE_SERVICE_ROLE_KEY` | the **secret** key (`sb_secret_…`) or legacy `service_role` key; never in the app |
@@ -179,6 +180,15 @@ someone searches it, or run `python -m omf.run activate <fips>`. Results appear 
 4. HUD: automatic. The HUD adapter searches every state that has an active county.
 5. `ensure_area_coverage` reports HUD as tracked only for Florida; widen the `bool_or(c.state = 'FL')` check
    in that function when you add a state.
+
+## Google Maps usage cap
+
+Street View and satellite images are fetched by the app's server route (`app/app/api/streetview`), which takes
+one request from a monthly allowance (`api_usage` table, `use_api_quota()`) before each call to Google. At the
+limit (`GOOGLE_MAPS_MONTHLY_LIMIT`, default 10,000 per calendar month, UTC) it stops calling Google and cards
+show the placeholder until the 1st. This month's count is on `/admin`. The scraper's Street View *metadata*
+checks are free and aren't counted. As a hard backstop, also set daily quotas in Google Cloud (APIs & Services
+→ each API → Quotas): e.g. 330 requests/day for Street View Static API and 100/day for Maps Static API.
 
 ## Skip tracing ("Find contact info")
 
