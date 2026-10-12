@@ -54,6 +54,17 @@ def _num(s) -> float | None:
         return None
 
 
+def _baths(s) -> float | None:
+    """HUD writes "2.1" for 2 full + 1 half bath; convert to the usual 2.5."""
+    if s in (None, ""):
+        return None
+    full, _, half = str(s).partition(".")
+    try:
+        return int(full) + 0.5 * int(half or 0) or None
+    except ValueError:
+        return _num(s)
+
+
 PROPERTY_TYPES = {"single family home": "single_family", "condominium": "condo", "townhouse": "townhouse",
                   "manufactured home": "mobile_home", "mobile home": "mobile_home", "duplex": "multi_family",
                   "triplex": "multi_family", "fourplex": "multi_family", "multi-family": "multi_family"}
@@ -130,7 +141,7 @@ class HudHomeStore(Adapter):
                 "property_type": PROPERTY_TYPES.get((s.get("propertyType") or "").lower(), "other"),
                 "land_use": s.get("propertyType"),
                 "beds": _num(s.get("bedrooms")),
-                "baths": _num(s.get("bathroomsdecimal") or s.get("bathrooms")),
+                "baths": _baths(s.get("bathrooms") or s.get("bathroomsdecimal")),
                 "sqft": int(_num(s.get("squareFootage")) or 0) or None,
                 "lot_size_sqft": _num(d.get("LotSize")),
                 "year_built": int(_num(s.get("yearBuilt")) or 0) or None,
