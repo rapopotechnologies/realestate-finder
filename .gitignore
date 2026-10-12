@@ -9,3 +9,6 @@ __pycache__/
 .venv/
 /scraper/.cache/
 /scraper/data/
+
+# Claude Code: project skills and CLAUDE.md are shared; personal settings are not
+.claude/settings.local.json
