@@ -36,6 +36,23 @@ value in these counties. Find out why before anything leans on it.
 - **Done when:** the property page and the calculator start from a value we can explain in one sentence, and a
   unit test pins the rule.
 
+## Step 1b. Section 8 rents (1 session, needs U7)
+
+Public HUD data, refreshed once a year by the scraper (no live calls from the app).
+
+- Load HUD Small Area Fair Market Rents (by ZIP and bedrooms; FY rates take effect Oct 1) and county FMRs as the
+  fallback outside metro areas, from the HUD USER FMR API, into a `fair_market_rents` table.
+- Property page: "Section 8 rent: ~$X/mo (HUD Fair Market Rent, N-bedroom, ZIP Y)" plus the local housing authority
+  with a link to its landlord page (HUD's public PHA list).
+- Calculators: BRRRR and Rental prefill rent with it (labeled, editable).
+- Search: "Section 8 rent ÷ price" sort and a minimum filter.
+- Wording: the housing authority's payment standard (usually 90–110% of FMR) is the real cap, the unit must pass
+  inspection and rent reasonableness, and a tenant isn't guaranteed. We never say "Section 8 approved".
+- **Done when:** every property with a ZIP and bedroom count shows the figure, the rental calculator starts from it,
+  and the sort works in Orange County.
+
+U7 (you): free access token at huduser.gov → GitHub secret `HUD_USER_TOKEN`.
+
 ## Step 2. Reminders and alerts (1–2 sessions, needs U1 + U4)
 
 People subscribe to being told, not to searching (strategy #2). This is the retention engine.
@@ -88,7 +105,7 @@ property" local gigs (#6), documents and people on a deal, data API (#7).
 
 | When | What |
 |---|---|
-| Monday | U1–U6 (you), Step 1 |
+| Monday | U1–U7 (you), Step 1, Step 1b |
 | Tue–Wed | Step 2 |
 | Thu | Step 3 |
 | Fri | Step 4 |
