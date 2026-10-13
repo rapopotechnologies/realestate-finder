@@ -67,6 +67,7 @@ export default async function MyListPage() {
       price: l?.price ?? null,
       eventDate: l?.event_date ?? null,
       listingStatus: l?.listing_status ?? null,
+      isClosed: l?.is_closed ?? false,
       marketValue: p.market_value,
       beds: p.beds, baths: p.baths, sqft: p.sqft,
       owner: p.owner,

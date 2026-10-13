@@ -13,6 +13,10 @@ import { Gallery } from "@/components/property/gallery";
 import { OwnerPanel } from "@/components/property/owner-panel";
 import { SaveButton } from "@/components/property/save-button";
 import { DealPanel } from "@/components/deals/deal-panel";
+import { DealCalculator, type PriceMultiple } from "@/components/deals/deal-calculator";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { CalcInputs } from "@/lib/calc";
+import type { Strategy } from "@/lib/deals";
 import { DetailMapLazy } from "@/components/property/detail-map-lazy";
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
@@ -40,6 +44,9 @@ export default async function PropertyPage({ params }: { params: { id: string } 
   const closed = auction ? isClosedAuction(auction) : hud ? hud.status !== "active" : false;
   const title = p.address ?? "Address not listed";
   const officialUrl = auction?.auction_url ?? hud?.listing_url ?? null;
+  const multiple = source === "tax_deed" && p.county_fips
+    ? ((await createSupabaseServerClient().rpc("auction_price_multiple", { p_county_fips: p.county_fips })).data as PriceMultiple | null)
+    : null;
 
   const facts: [string, React.ReactNode][] = [
     ["Type", PROPERTY_TYPES.find((t) => t.value === p.property_type)?.label ?? "—"],
@@ -120,6 +127,12 @@ export default async function PropertyPage({ params }: { params: { id: string } 
                 contacts={d.contacts} lookupEnabled={skipTraceEnabled()} />
             </Section>
           )}
+
+          <Section id="calc-heading" title="Run the numbers">
+            <DealCalculator propertyId={p.id} onList={!!d.saved} strategy={(d.saved?.strategy as Strategy) ?? null}
+              savedInputs={d.saved?.calc as Partial<CalcInputs> | null} countyValue={p.market_value} price={price}
+              source={source} multiple={multiple} countyName={county?.county_name ?? null} />
+          </Section>
 
           {source && !closed && (
             <Section id="guide-heading" title={source === "tax_deed" ? "How this auction works" : "How HUD bidding works"}>

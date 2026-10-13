@@ -810,6 +810,7 @@ export type Database = {
       saved_properties: {
         Row: {
           created_at: string
+          calc: Json | null
           next_follow_up: string | null
           position: number
           property_id: string
@@ -820,6 +821,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          calc?: Json | null
           next_follow_up?: string | null
           position?: number
           property_id: string
@@ -830,6 +832,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          calc?: Json | null
           next_follow_up?: string | null
           position?: number
           property_id?: string
@@ -939,6 +942,7 @@ export type Database = {
       }
     }
     Functions: {
+      auction_price_multiple: { Args: { p_county_fips: string }; Returns: Json }
       boundaries_in_view: {
         Args: {
           p_layer: string

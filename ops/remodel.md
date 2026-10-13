@@ -105,6 +105,8 @@ Each row ships on its own and leaves the app better. Rows 3–5 shipped together
 3. ✅ *2026-10-12* **Property, reordered for the decision (P1, P3, P2).** Owner + redemption up top; "How this auction works".
 4. ✅ *2026-10-12* **Search for planners (S4, S5, S6, S7, S11).** Date filter, countdowns, cluster colors, quieter outlines.
 5. ✅ *2026-10-12* **Front door that shows the product (F2, F3, F4, F5).** Public preview, sign-up with password, FAQ.
-6. **My List as a pipeline (L1, L2, L3).** *Partly done 2026-10-12 with CRM phase 1: columns sort by follow-up then
-   date (L1); strategy, offer log, contact log, follow-up dates, Under contract / Closed stages. Still open: L2, L3.* Ordered by date, outcomes flow back, reminders.
+6. ✅ *2026-10-12* **My List as a pipeline (L1, L2, L3).** CRM phase 1 (stages, strategy, offer and contact logs,
+   follow-ups), then: a **Today** strip (overdue / due follow-ups, auctions within 7 days), the four active stages side by
+   side with no sideways scrolling, Closed / Passed folded into an Archive, stage tabs on phones, and the official
+   outcome ("Sold", "Redeemed") on cards (L2). Email reminders (L3) still open: needs an email provider.
 7. **Phone density and polish (S8, S10, P5, P6, X2, L4).**

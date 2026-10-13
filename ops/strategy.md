@@ -114,8 +114,10 @@ which is the hard part.
 
 Phase 1 built 2026-10-12: strategy per deal (wholesale / flip / BRRRR / rental), offer log with responses and
 counters ("Offered $45,000 · countered $60,000"), contact log (call / text / email / letter / visit + result),
-follow-up dates, stages through Under contract and Closed. Next: per-strategy calculators (70% rule MAO,
-flip profit, BRRRR cash left in deal / cash-on-cash), follow-up reminder emails, documents and people on a deal.
+follow-up dates, stages through Under contract and Closed. Phase 2 (same day): "Run the numbers" on every property
+(wholesale MAO, flip profit / ROI, BRRRR cash left / cash-on-cash, rental cap rate), saved with the deal; tax deeds
+start from the expected winning bid (opening bid × the county's median sold multiple). Next: follow-up reminder
+emails, documents and people on a deal.
 It's the stickiest part of a subscription: once someone's deals live here, they stay.
 
 ## What to do first

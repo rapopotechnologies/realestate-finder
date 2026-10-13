@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { CalendarClock, CircleDollarSign, Download, GripVertical, Heart, StickyNote } from "lucide-react";
+import { CalendarClock, ChevronRight, CircleDollarSign, Download, GripVertical, Heart, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Source } from "@/lib/search/types";
 import { STAGES, STRATEGIES, followUpState, labelOf, type Stage, type Strategy } from "@/lib/deals";
 import { dealTier } from "@/lib/deal";
-import { bathsLabel, money, number, shortDate } from "@/lib/format";
+import { bathsLabel, daysUntil, money, number, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -31,6 +31,8 @@ export interface SavedItem {
   price: number | null;
   eventDate: string | null;
   listingStatus: string | null;
+  /** the auction / sale is over (sold, redeemed, cancelled, date passed) */
+  isClosed: boolean;
   marketValue: number | null;
   beds: number | null;
   baths: number | null;
@@ -48,11 +50,35 @@ function byNextAction(a: SavedItem, b: SavedItem) {
   return (a.followUp ?? "9999").localeCompare(b.followUp ?? "9999") || (a.eventDate ?? "9999").localeCompare(b.eventDate ?? "9999");
 }
 
+const ACTIVE: Stage[] = ["interested", "contacted", "offer_made", "under_contract"];
+const ARCHIVE: Stage[] = ["closed", "passed"];
+const SOON_DAYS = 7;
+
+/** Why a deal needs attention today: a follow-up that's due, or an auction / bid deadline within a week */
+function attention(i: SavedItem): { text: string; urgent: boolean } | null {
+  if (ARCHIVE.includes(i.status)) return null;
+  const follow = followUpState(i.followUp);
+  if (follow === "overdue") return { text: `Follow-up overdue since ${shortDate(i.followUp!)}`, urgent: true };
+  if (follow === "today") return { text: "Follow up today", urgent: true };
+  const days = i.isClosed ? null : daysUntil(i.eventDate);
+  if (days != null && days >= 0 && days <= SOON_DAYS) {
+    const what = i.source === "hud" ? "Bid deadline" : "Auction";
+    return { text: `${what} ${days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}`, urgent: days <= 3 };
+  }
+  return null;
+}
+
 export function MyListBoard({ initial }: { initial: SavedItem[] }) {
   const [items, setItems] = useState(initial);
   const [strategy, setStrategy] = useState<Strategy | "all">("all");
+  const [phoneStage, setPhoneStage] = useState<Stage>("interested");
+  const [archiveOpen, setArchiveOpen] = useState(false);
   // filter() copies, so sorting never reorders the state array itself
   const shown = items.filter((i) => strategy === "all" || i.strategy === strategy).sort(byNextAction);
+  const inStage = (s: Stage) => shown.filter((i) => i.status === s);
+  const today = shown.flatMap((i) => { const why = attention(i); return why ? [{ item: i, ...why }] : []; })
+    .sort((a, b) => Number(b.urgent) - Number(a.urgent));
+  const archived = shown.filter((i) => ARCHIVE.includes(i.status)).length;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
 
   async function move(propertyId: string, status: Stage) {
@@ -80,10 +106,33 @@ export function MyListBoard({ initial }: { initial: SavedItem[] }) {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl">My List</h1>
-          <p className="text-sm text-muted-foreground">{items.length} saved propert{items.length === 1 ? "y" : "ies"}. Drag cards between columns or use the menu on each card.</p>
+          <p className="text-sm text-muted-foreground">{items.length} saved propert{items.length === 1 ? "y" : "ies"}. Drag cards between stages or use the menu on each card.</p>
         </div>
         <Button variant="outline" onClick={() => downloadCsv(shown)}><Download /> Export CSV</Button>
       </div>
+
+      <section aria-labelledby="today-heading" className="mb-5 rounded-xl border bg-card p-4">
+        <h2 id="today-heading" className="flex items-center gap-2 font-sans text-sm font-semibold">
+          <CalendarClock className="size-4 text-plat" aria-hidden /> Today
+        </h2>
+        {today.length ? (
+          <ul className="mt-2 divide-y">
+            {today.map(({ item, text, urgent }) => (
+              <li key={item.propertyId} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2 text-sm">
+                <Link href={`/property/${item.propertyId}`} className="min-w-0 truncate font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  {item.address ?? "Address not listed"}<span className="font-normal text-muted-foreground">{item.city && ` · ${item.city}`}</span>
+                </Link>
+                <span className={cn("whitespace-nowrap text-xs", urgent ? "font-semibold text-alert" : "font-medium text-deed")}>
+                  {text} · {labelOf(STAGES, item.status)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-1 text-sm text-muted-foreground">Nothing due. Follow-ups you set and auctions in the next {SOON_DAYS} days show up here.</p>
+        )}
+      </section>
+
       <div role="group" aria-label="Strategy" className="mb-4 flex flex-wrap gap-2">
         {[{ value: "all" as const, label: "All" }, ...STRATEGIES].map((s) => (
           <button key={s.value} type="button" aria-pressed={strategy === s.value} onClick={() => setStrategy(s.value)}
@@ -94,27 +143,56 @@ export function MyListBoard({ initial }: { initial: SavedItem[] }) {
           </button>
         ))}
       </div>
+
+      {/* Phones: one stage at a time */}
+      <div role="tablist" aria-label="Stage" className="-mx-4 mb-3 flex gap-1 overflow-x-auto px-4 md:hidden">
+        {STAGES.map((s) => (
+          <button key={s.value} type="button" role="tab" aria-selected={phoneStage === s.value} onClick={() => setPhoneStage(s.value)}
+            className={cn("h-9 shrink-0 rounded-full px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              phoneStage === s.value ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+            {s.label} <span className="tabular-nums opacity-80">{inStage(s.value).length}</span>
+          </button>
+        ))}
+      </div>
+
       <DndContext id="my-list" sensors={sensors} onDragEnd={onDragEnd}>
-        {/* Six stages: stacked on phones, a scrolling row of columns from tablet up */}
-        <div className="grid grid-cols-1 gap-4 md:flex md:items-start md:overflow-x-auto md:pb-3">
-          {STAGES.map((s) => (
-            <Column key={s.value} status={s.value} title={s.label} items={shown.filter((i) => i.status === s.value)} onMove={move} />
+        {/* Four active stages fit side by side on desktop; two by two on tablets */}
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {ACTIVE.map((s) => (
+            <Column key={s} status={s} items={inStage(s)} onMove={move} className={cn(phoneStage !== s && "max-md:hidden")} />
           ))}
+        </div>
+        <div className={cn("mt-6", !ARCHIVE.includes(phoneStage) && "max-md:hidden")}>
+          <button type="button" aria-expanded={archiveOpen} onClick={() => setArchiveOpen((o) => !o)}
+            className="mb-3 hidden items-center gap-1.5 rounded-md text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:inline-flex">
+            <ChevronRight className={cn("size-4 transition", archiveOpen && "rotate-90")} aria-hidden />
+            Archive <span className="font-normal text-muted-foreground">· {archived} closed or passed</span>
+          </button>
+          {/* Collapsed archive still takes drops: the column headers stay visible */}
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+            {ARCHIVE.map((s) => (
+              <Column key={s} status={s} items={inStage(s)} onMove={move} collapsed={!archiveOpen}
+                className={cn(phoneStage !== s && "max-md:hidden")} />
+            ))}
+          </div>
         </div>
       </DndContext>
     </div>
   );
 }
 
-function Column({ status, title, items, onMove }: { status: Stage; title: string; items: SavedItem[]; onMove: (id: string, s: Stage) => void }) {
+function Column({ status, items, onMove, collapsed = false, className }: {
+  status: Stage; items: SavedItem[]; onMove: (id: string, s: Stage) => void; collapsed?: boolean; className?: string;
+}) {
   const { isOver, setNodeRef } = useDroppable({ id: status });
   return (
     <section ref={setNodeRef} aria-labelledby={`col-${status}`}
-      className={cn("flex min-h-40 min-w-0 flex-col rounded-xl border bg-card p-3 transition md:w-72 md:shrink-0", isOver && "border-plat bg-plat-soft")}>
-      <h2 id={`col-${status}`} className="mb-3 flex items-center justify-between border-b pb-2 font-sans text-sm font-semibold">
-        {title} <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">{items.length}</span>
+      className={cn("flex min-w-0 flex-col rounded-xl border bg-card p-3 transition", !collapsed && "min-h-40", isOver && "border-plat bg-plat-soft", className)}>
+      <h2 id={`col-${status}`} className={cn("flex items-center justify-between font-sans text-sm font-semibold", !collapsed && "mb-3 border-b pb-2", collapsed && "md:py-1")}>
+        {labelOf(STAGES, status)} <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">{items.length}</span>
       </h2>
-      <ul className="space-y-3">
+      {/* On phones a stage is only shown when picked, so it's never collapsed there */}
+      <ul className={cn("space-y-3", collapsed && "md:hidden")}>
         {items.map((i) => <SavedCard key={i.propertyId} item={i} onMove={onMove} />)}
         {!items.length && <li className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">Drop properties here</li>}
       </ul>
@@ -132,13 +210,19 @@ function SavedCard({ item, onMove }: { item: SavedItem; onMove: (id: string, s: 
         <PropertyPhoto src={item.thumb} propertyId={item.propertyId} photoSource={item.photoSource} alt={item.address ?? "Property"}
           className="h-20 w-24 shrink-0 rounded-md" size="240x200" />
         <div className="min-w-0 flex-1">
-          <Link href={`/property/${item.propertyId}`} className="block truncate text-sm font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            {money(item.price)} · {item.address ?? "Address not listed"}
+          <p className="text-sm font-semibold tabular-nums">{money(item.price)}</p>
+          <Link href={`/property/${item.propertyId}`} className="block truncate text-sm font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {item.address ?? "Address not listed"}
           </Link>
           <p className="truncate text-xs text-muted-foreground">{[item.city, item.county && `${item.county} County`, item.zip].filter(Boolean).join(" · ")}</p>
           {facts && <p className="text-xs">{facts}</p>}
           <div className="mt-1 flex flex-wrap gap-1">
             {item.source && <SourceBadge source={item.source} date={item.eventDate} className="text-[10px]" />}
+            {item.isClosed && (
+              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium" title="Status on the official listing">
+                {item.listingStatus ?? "Closed"}
+              </span>
+            )}
             {item.strategy !== "undecided" && (
               <span className="rounded-full border px-2 py-0.5 text-[10px] font-medium">{labelOf(STRATEGIES, item.strategy)}</span>
             )}
@@ -178,7 +262,7 @@ function SavedCard({ item, onMove }: { item: SavedItem; onMove: (id: string, s: 
 function FollowUp({ date }: { date: string }) {
   const state = followUpState(date);
   return (
-    <p className={cn("flex gap-1.5", state === "overdue" ? "font-semibold text-destructive" : state === "today" ? "font-semibold text-deed" : "text-muted-foreground")}>
+    <p className={cn("flex gap-1.5", state === "overdue" ? "font-semibold text-alert" : state === "today" ? "font-semibold text-deed" : "text-muted-foreground")}>
       <CalendarClock className="mt-0.5 size-3 shrink-0" aria-hidden />
       {state === "overdue" ? `Follow-up overdue (${shortDate(date)})` : state === "today" ? "Follow up today" : `Follow up ${shortDate(date)}`}
     </p>
