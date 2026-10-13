@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { MapPinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-2xl font-semibold">Page not found</h1>
-      <Button asChild><Link href="/search">Back to search</Link></Button>
-    </div>
+    <main id="main" className="flex min-h-screen items-center">
+      <EmptyState page icon={MapPinOff} title="Page not found" body="The link may be old or incomplete."
+        action={<Button asChild><Link href="/search">Back to search</Link></Button>} />
+    </main>
   );
 }

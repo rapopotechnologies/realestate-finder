@@ -14,6 +14,13 @@ Three in-app rooms, same names and order in the header (desktop) and the bottom 
 Search `/search` (property pages belong to it), My List `/my-list`, Account `/account` (Admin lives here).
 Defined once in `app/components/layout/nav-items.ts`. Don't add a fourth; put new things in a room.
 
+## Design system
+
+`ops/design-brief.md` is the source of truth for the look ("Plat, ink and seal"). Use the meaning-named tokens
+(`plat`, `deed`, `hud`, `gain`, `alert`, each with `-soft`) and never ad-hoc Tailwind palette colors. h1/h2 are
+Fraunces automatically; record IDs use `RecordId` (mono). One of each: `Section`, `Stat`, `EmptyState`
+(`components/ui`), `SourceBadge` / `Countdown` / `RecordId` (`components/property/badges.tsx`), `PropertyCard`.
+
 ## Code style: descriptive, simple, efficient
 
 Write every change the way a very senior engineer would; `/ponytail` applies the full checklist to existing code.

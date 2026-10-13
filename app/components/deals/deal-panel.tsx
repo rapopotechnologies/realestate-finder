@@ -116,7 +116,7 @@ export function DealPanel({ propertyId, saved, events, notes }: {
       </div>
 
       {offer && (
-        <div className="rounded-lg border border-primary/30 bg-accent p-3 text-sm" aria-live="polite">
+        <div className="rounded-lg border border-plat/30 bg-accent p-3 text-sm" aria-live="polite">
           <p className="text-xs font-medium uppercase tracking-wide text-accent-foreground">Latest offer</p>
           <p className="mt-0.5 font-semibold">{offerSummary(offer)}</p>
           <p className="text-xs text-muted-foreground">{longDate(offer.occurred_at)}</p>

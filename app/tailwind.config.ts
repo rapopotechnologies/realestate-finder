@@ -9,6 +9,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "ui-serif", "Georgia", "serif"], // h1/h2, big prices
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"], // record IDs only
       },
       colors: {
         border: "hsl(var(--border))",
@@ -23,13 +25,12 @@ const config: Config = {
         accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
         popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
-        // deal chips: great / good
-        deal: {
-          great: "hsl(var(--deal-great))",
-          "great-soft": "hsl(var(--deal-great-soft))",
-          good: "hsl(var(--deal-good))",
-          "good-soft": "hsl(var(--deal-good-soft))",
-        },
+        // Meaningful colors (ops/design-brief.md): brand/places, tax deed, HUD, good, act-now
+        plat: { DEFAULT: "hsl(var(--plat))", soft: "hsl(var(--plat-soft))" },
+        deed: { DEFAULT: "hsl(var(--deed))", soft: "hsl(var(--deed-soft))" },
+        hud: { DEFAULT: "hsl(var(--hud))", soft: "hsl(var(--hud-soft))" },
+        gain: { DEFAULT: "hsl(var(--gain))", soft: "hsl(var(--gain-soft))" },
+        alert: { DEFAULT: "hsl(var(--alert))", soft: "hsl(var(--alert-soft))" },
       },
       borderRadius: {
         lg: "var(--radius)",

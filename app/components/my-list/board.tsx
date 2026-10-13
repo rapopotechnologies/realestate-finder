@@ -13,6 +13,7 @@ import { dealTier } from "@/lib/deal";
 import { bathsLabel, money, number, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { DealChip, SourceBadge } from "@/components/property/badges";
 import { PropertyPhoto } from "@/components/property/property-photo";
 
@@ -68,12 +69,9 @@ export function MyListBoard({ initial }: { initial: SavedItem[] }) {
 
   if (!items.length) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center px-4 py-24 text-center">
-        <Heart className="size-10 text-muted-foreground" aria-hidden />
-        <h1 className="mt-4 text-2xl font-semibold">Your list is empty</h1>
-        <p className="mt-2 text-muted-foreground">Tap the heart on any property to save it here and track your outreach.</p>
-        <Button asChild className="mt-6"><Link href="/search">Find properties</Link></Button>
-      </div>
+      <EmptyState page icon={Heart} title="Your list is empty"
+        body="Tap the heart on any property to save it here, then track calls, offers and follow-ups."
+        action={<Button asChild><Link href="/search">Find properties</Link></Button>} />
     );
   }
 
@@ -81,7 +79,7 @@ export function MyListBoard({ initial }: { initial: SavedItem[] }) {
     <div className="px-4 py-6 sm:px-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">My List</h1>
+          <h1 className="text-3xl">My List</h1>
           <p className="text-sm text-muted-foreground">{items.length} saved propert{items.length === 1 ? "y" : "ies"}. Drag cards between columns or use the menu on each card.</p>
         </div>
         <Button variant="outline" onClick={() => downloadCsv(shown)}><Download /> Export CSV</Button>
@@ -90,7 +88,7 @@ export function MyListBoard({ initial }: { initial: SavedItem[] }) {
         {[{ value: "all" as const, label: "All" }, ...STRATEGIES].map((s) => (
           <button key={s.value} type="button" aria-pressed={strategy === s.value} onClick={() => setStrategy(s.value)}
             className={cn("h-8 rounded-full border px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              strategy === s.value ? "border-primary bg-accent text-accent-foreground" : "bg-background hover:bg-accent")}>
+              strategy === s.value ? "border-primary bg-primary text-primary-foreground [&>span]:text-primary-foreground/80" : "bg-card hover:bg-accent")}>
             {s.label}
             <span className="ml-1 text-xs text-muted-foreground">{s.value === "all" ? items.length : items.filter((i) => i.strategy === s.value).length}</span>
           </button>
@@ -98,7 +96,7 @@ export function MyListBoard({ initial }: { initial: SavedItem[] }) {
       </div>
       <DndContext id="my-list" sensors={sensors} onDragEnd={onDragEnd}>
         {/* Six stages: stacked on phones, a scrolling row of columns from tablet up */}
-        <div className="grid gap-4 md:flex md:items-start md:overflow-x-auto md:pb-3">
+        <div className="grid grid-cols-1 gap-4 md:flex md:items-start md:overflow-x-auto md:pb-3">
           {STAGES.map((s) => (
             <Column key={s.value} status={s.value} title={s.label} items={shown.filter((i) => i.status === s.value)} onMove={move} />
           ))}
@@ -112,9 +110,9 @@ function Column({ status, title, items, onMove }: { status: Stage; title: string
   const { isOver, setNodeRef } = useDroppable({ id: status });
   return (
     <section ref={setNodeRef} aria-labelledby={`col-${status}`}
-      className={cn("flex min-h-40 flex-col rounded-xl border bg-secondary/50 p-3 transition md:w-72 md:shrink-0", isOver && "border-primary bg-accent")}>
-      <h2 id={`col-${status}`} className="mb-3 flex items-center justify-between text-sm font-semibold">
-        {title} <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">{items.length}</span>
+      className={cn("flex min-h-40 min-w-0 flex-col rounded-xl border bg-card p-3 transition md:w-72 md:shrink-0", isOver && "border-plat bg-plat-soft")}>
+      <h2 id={`col-${status}`} className="mb-3 flex items-center justify-between border-b pb-2 font-sans text-sm font-semibold">
+        {title} <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">{items.length}</span>
       </h2>
       <ul className="space-y-3">
         {items.map((i) => <SavedCard key={i.propertyId} item={i} onMove={onMove} />)}
@@ -129,7 +127,7 @@ function SavedCard({ item, onMove }: { item: SavedItem; onMove: (id: string, s: 
   const facts = [item.beds != null ? `${item.beds} bd` : null, bathsLabel(item.baths), item.sqft ? `${number(item.sqft)} sqft` : null].filter(Boolean).join(" · ");
   return (
     <li ref={setNodeRef} style={{ transform: CSS.Translate.toString(transform) }}
-      className={cn("overflow-hidden rounded-lg border bg-card shadow-sm", isDragging && "relative z-10 shadow-lg ring-2 ring-primary")}>
+      className={cn("overflow-hidden rounded-lg border bg-card shadow-sm", isDragging && "relative z-10 shadow-lg ring-2 ring-plat")}>
       <div className="flex gap-3 p-2">
         <PropertyPhoto src={item.thumb} propertyId={item.propertyId} photoSource={item.photoSource} alt={item.address ?? "Property"}
           className="h-20 w-24 shrink-0 rounded-md" size="240x200" />
@@ -180,7 +178,7 @@ function SavedCard({ item, onMove }: { item: SavedItem; onMove: (id: string, s: 
 function FollowUp({ date }: { date: string }) {
   const state = followUpState(date);
   return (
-    <p className={cn("flex gap-1.5", state === "overdue" ? "font-semibold text-destructive" : state === "today" ? "font-semibold text-deal-good" : "text-muted-foreground")}>
+    <p className={cn("flex gap-1.5", state === "overdue" ? "font-semibold text-destructive" : state === "today" ? "font-semibold text-deed" : "text-muted-foreground")}>
       <CalendarClock className="mt-0.5 size-3 shrink-0" aria-hidden />
       {state === "overdue" ? `Follow-up overdue (${shortDate(date)})` : state === "today" ? "Follow up today" : `Follow up ${shortDate(date)}`}
     </p>

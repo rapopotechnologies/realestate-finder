@@ -971,6 +971,7 @@ export type Database = {
         Returns: number
       }
       normalize_parcel_id: { Args: { p: string }; Returns: string }
+      public_preview_points: { Args: never; Returns: Json }
       public_stats: { Args: never; Returns: Json }
       refresh_property_areas: { Args: never; Returns: number }
       search_properties: {

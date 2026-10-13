@@ -5,7 +5,7 @@ import { forwardRef } from "react";
 import { bathsLabel, money, number } from "@/lib/format";
 import type { ListingItem } from "@/lib/search/types";
 import { cn } from "@/lib/utils";
-import { DealChip, SourceBadge } from "./badges";
+import { Countdown, DealChip, SourceBadge } from "./badges";
 import { PropertyPhoto } from "./property-photo";
 import { SaveButton } from "./save-button";
 
@@ -34,21 +34,22 @@ export const PropertyCard = forwardRef<HTMLElement, {
       onFocus={() => onHover?.(item.listing_id)}
       onBlur={() => onHover?.(null)}
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-card shadow-sm transition hover:shadow-md",
-        highlighted && "ring-2 ring-primary"
+        "group relative overflow-hidden rounded-xl border bg-card transition hover:shadow-md",
+        highlighted && "ring-2 ring-plat"
       )}
     >
       <Link href={href} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
         <PropertyPhoto src={photoUrl} propertyId={item.property_id} photoSource={item.photo_source} alt={title}
           className="aspect-[16/10] w-full" size="640x400" />
         <div className="space-y-1.5 p-3">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <SourceBadge source={item.source} date={item.event_date} />
+            <Countdown date={item.event_date} closed={item.is_closed} />
             <DealChip source={item.source} tier={item.deal_tier} ratio={item.value_ratio} />
             {item.is_closed && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{item.listing_status}</span>}
           </div>
           <div>
-            <p className="whitespace-nowrap text-xl font-bold tracking-tight">
+            <p className="whitespace-nowrap text-xl font-bold tabular-nums tracking-tight">
               {money(item.price)}
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">{item.source === "tax_deed" ? "opening bid" : "list price"}</span>
             </p>

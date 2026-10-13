@@ -18,7 +18,7 @@ describe("search URL state", () => {
   });
 
   it("round-trips filters", () => {
-    const qs = "city=Clermont,FL&r=10&src=hud&pmin=5000&pmax=100000&type=single_family&beds=3&bldg=1&closed=1&sort=price_asc&page=2";
+    const qs = "city=Clermont,FL&r=10&src=hud&within=30&pmin=5000&pmax=100000&type=single_family&beds=3&bldg=1&closed=1&sort=price_asc&page=2";
     expect(serializeSearch(parse(qs))).toBe(qs);
   });
 
@@ -37,6 +37,9 @@ describe("search URL state", () => {
     expect(rpcArgs(parse("county=12069&src=tax_deed&beds=2"), null)).toMatchObject({
       p_area_layer: "county", p_area_geoid: "12069",
       p_filters: { hide_closed: true, sources: ["tax_deed"], beds_min: 2 },
+    });
+    expect(rpcArgs(parse("county=12069&within=7"), null)).toMatchObject({
+      p_filters: { within_days: 7 },
     });
     expect(rpcArgs(parse("lat=28.5&lng=-81.7"), null)).toMatchObject({ p_lat: 28.5, p_lng: -81.7, p_radius_mi: 25 });
     expect(rpcArgs(parse(""), null)).toBeNull();

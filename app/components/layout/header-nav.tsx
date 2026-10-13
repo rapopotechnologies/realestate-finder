@@ -13,7 +13,7 @@ export function HeaderNav() {
       {NAV_ITEMS.filter((i) => i.href !== "/search").map(({ href, label, icon: Icon }) => (
         <Link key={href} href={href} aria-current={isActive(pathname, href) ? "page" : undefined}
           className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            isActive(pathname, href) && "text-primary")}>
+            isActive(pathname, href) && "text-plat")}>
           <Icon className="size-4" aria-hidden /> {label}
         </Link>
       ))}

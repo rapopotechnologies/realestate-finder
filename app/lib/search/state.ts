@@ -4,7 +4,7 @@
 //   /search?zip=34715&r=25          a ZIP, plus everything within 25 miles ("Include nearby")
 //   /search?lat=28.5&lng=-81.7&r=25&near=1      near you
 //   /search?lat=..&lng=..&r=5&q=123 Main St      an address
-// Filters: src, pmin, pmax, type, beds, bldg, closed, sort, page
+// Filters: src, within (days), pmin, pmax, type, beds, bldg, closed, sort, page
 
 import type { Json } from "@/lib/supabase/types";
 import type { Layer, Source } from "./types";
@@ -18,6 +18,7 @@ export type Sort = "deal" | "price_asc" | "price_desc" | "date" | "distance" | "
 
 export interface Filters {
   sources: Source[]; // empty = both
+  withinDays: number | null; // auction / bid deadline within N days
   priceMin: number | null;
   priceMax: number | null;
   types: string[];
@@ -78,6 +79,7 @@ export function parseSearch(p: URLSearchParams): SearchState {
     radiusMi: num(p.get("r")) ?? (area.kind === "point" ? DEFAULT_RADIUS : null),
     filters: {
       sources: src,
+      withinDays: num(p.get("within")),
       priceMin: num(p.get("pmin")),
       priceMax: num(p.get("pmax")),
       types: (p.get("type") ?? "").split(",").filter(Boolean),
@@ -109,6 +111,7 @@ export function serializeSearch(s: SearchState): string {
   if (s.radiusMi != null && !(a.kind === "point" && s.radiusMi === DEFAULT_RADIUS && a.near)) p.set("r", String(s.radiusMi));
   const f = s.filters;
   if (f.sources.length === 1) p.set("src", f.sources[0]);
+  if (f.withinDays != null) p.set("within", String(f.withinDays));
   if (f.priceMin != null) p.set("pmin", String(f.priceMin));
   if (f.priceMax != null) p.set("pmax", String(f.priceMax));
   if (f.types.length) p.set("type", f.types.join(","));
@@ -126,6 +129,7 @@ export function rpcArgs(s: SearchState, areaGeoid: string | null) {
   const f = s.filters;
   const filters: { [key: string]: Json } = { hide_closed: !f.showClosed };
   if (f.sources.length === 1) filters.sources = f.sources;
+  if (f.withinDays != null) filters.within_days = f.withinDays;
   if (f.priceMin != null) filters.price_min = f.priceMin;
   if (f.priceMax != null) filters.price_max = f.priceMax;
   if (f.types.length) filters.property_types = f.types;

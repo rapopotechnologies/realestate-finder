@@ -81,8 +81,8 @@ export function OwnerPanel({ propertyId, owner, homestead, lastSaleDate, contact
           {busy ? <Loader2 className="animate-spin" /> : <Search />} Find contact info
         </Button>
         {!lookupEnabled && <p className="text-xs text-muted-foreground">Contact lookup (skip tracing) isn&apos;t turned on for this app yet.</p>}
-        <p className="flex gap-2 rounded-lg bg-deal-good-soft p-3 text-xs text-foreground">
-          <AlertTriangle className="size-4 shrink-0 text-deal-good" aria-hidden />
+        <p className="flex gap-2 rounded-lg bg-deed-soft p-3 text-xs text-foreground">
+          <AlertTriangle className="size-4 shrink-0 text-deed" aria-hidden />
           Before calling or texting, check the number against the federal Do Not Call Registry and Florida&apos;s Do Not Call list,
           and follow the TCPA and Florida Telephone Solicitation Act rules on calls, texts and autodialers.
         </p>

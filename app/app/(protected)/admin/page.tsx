@@ -3,13 +3,15 @@ import { AlertTriangle, CheckCircle2, CircleDashed, XCircle } from "lucide-react
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
 import type { Json } from "@/lib/supabase/types";
+import { Section } from "@/components/ui/section";
+import { Stat } from "@/components/ui/stat";
 
 export const metadata = { title: "Scrape runs" };
 
 const STATUS = {
-  ok: { icon: CheckCircle2, cls: "text-deal-great", label: "OK" },
-  partial: { icon: AlertTriangle, cls: "text-deal-good", label: "Partial" },
-  failed: { icon: XCircle, cls: "text-destructive", label: "Failed" },
+  ok: { icon: CheckCircle2, cls: "text-gain", label: "OK" },
+  partial: { icon: AlertTriangle, cls: "text-deed", label: "Partial" },
+  failed: { icon: XCircle, cls: "text-alert", label: "Failed" },
   running: { icon: CircleDashed, cls: "text-muted-foreground", label: "Running" },
 } as const;
 
@@ -32,29 +34,35 @@ export default async function AdminPage() {
   ]);
   const googleLimit = Number(process.env.GOOGLE_MAPS_MONTHLY_LIMIT) || 10_000;
   const name = new Map((counties ?? []).map((c) => [c.fips, c.county_name]));
+  const dayAgo = Date.now() - 86_400_000;
+  const recent = (runs ?? []).filter((r) => new Date(r.started_at).getTime() > dayAgo);
+  const runsToday = recent.length;
+  const failedToday = recent.filter((r) => r.status === "failed").length;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6">
       <div>
-        <h1 className="text-2xl font-semibold">Scrape runs</h1>
-        <p className="text-sm text-muted-foreground">Daily at 6:00 AM Eastern (GitHub Actions). Newest first.</p>
-        <p className="mt-2 text-sm">
-          Google images this month: <span className="font-semibold tabular-nums">{(usage?.requests ?? 0).toLocaleString()}</span>
-          <span className="text-muted-foreground"> / {googleLimit.toLocaleString()} (then cards show the placeholder until the 1st)</span>
-        </p>
+        <h1 className="text-3xl">Scrape runs</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Daily at 6:00 AM Eastern (GitHub Actions). Newest first.</p>
       </div>
 
-      <section aria-labelledby="counties-heading">
-        <h2 id="counties-heading" className="mb-3 font-semibold">Tracked counties ({counties?.length ?? 0})</h2>
+      <dl className="grid gap-3 sm:grid-cols-3">
+        <Stat value={(counties?.length ?? 0).toLocaleString()} label="counties tracked" />
+        <Stat value={`${failedToday} / ${runsToday}`} label="runs failed in the last 24 hours" />
+        <Stat value={`${(usage?.requests ?? 0).toLocaleString()} / ${googleLimit.toLocaleString()}`}
+          label="Google images this month (then cards show the placeholder until the 1st)" />
+      </dl>
+
+      <Section id="counties-heading" title="Tracked counties">
         <ul className="flex flex-wrap gap-2">
           {(counties ?? []).map((c) => (
-            <li key={c.fips} className="rounded-full border bg-card px-3 py-1 text-sm">
+            <li key={c.fips} className="rounded-full border bg-background px-3 py-1 text-sm">
               {c.county_name}{" "}
               <span className="text-xs text-muted-foreground">· {c.last_scraped_at ? `scraped ${timeAgo(c.last_scraped_at)}` : "waiting for first run"}</span>
             </li>
           ))}
         </ul>
-      </section>
+      </Section>
 
       <section aria-labelledby="runs-heading">
         <h2 id="runs-heading" className="sr-only">Runs</h2>
@@ -87,7 +95,7 @@ export default async function AdminPage() {
                       <td className="px-3 py-2">
                         {r.errors > 0 ? (
                           <details>
-                            <summary className="cursor-pointer text-destructive">{r.errors}</summary>
+                            <summary className="cursor-pointer text-alert">{r.errors}</summary>
                             <ul className="mt-1 max-w-md space-y-1 text-xs">
                               {errs.map((e, i) => <li key={i}><span className="font-medium">{e.item}</span>: {e.error}</li>)}
                             </ul>

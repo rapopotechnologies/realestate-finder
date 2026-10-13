@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import type { PhotoView } from "@/lib/property/load";
@@ -22,6 +22,13 @@ export function Gallery({ propertyId, photos, address }: { propertyId: string; p
   const [index, setIndex] = useState(0);
   const [broken, setBroken] = useState<Set<string>>(new Set());
   const visible = slides.filter((s) => !broken.has(s.src));
+  const grid = useRef<HTMLDivElement>(null);
+
+  // A server-rendered <img> can fail before hydration attaches onError: check once mounted
+  useEffect(() => {
+    const failed = [...(grid.current?.querySelectorAll("img") ?? [])].filter((i) => i.complete && !i.naturalWidth);
+    if (failed.length) setBroken((b) => new Set([...b, ...failed.map((i) => i.dataset.src!)]));
+  }, []);
   const go = useCallback((d: number) => setIndex((i) => (i + d + visible.length) % visible.length), [visible.length]);
 
   useEffect(() => {
@@ -41,26 +48,36 @@ export function Gallery({ propertyId, photos, address }: { propertyId: string; p
   const markBroken = (src: string) => setBroken((b) => new Set(b).add(src));
   const main = visible[0];
   const side = visible.slice(1, 5);
+  // Two images (e.g. Street View + satellite): equal tiles; three or more: big photo + grid of four
+  const pair = visible.length === 2;
 
   return (
     <>
-      <div className={cn("grid gap-2 overflow-hidden rounded-xl", side.length ? "md:grid-cols-[2fr_1fr]" : "")}>
+      <div ref={grid} className={cn("grid gap-2 overflow-hidden rounded-xl", pair ? "md:grid-cols-2" : side.length ? "md:grid-cols-[2fr_1fr]" : "")}>
         <button type="button" onClick={() => { setIndex(0); setOpen(true); }} aria-label={`Open photo 1 of ${visible.length}`}
           className="group relative aspect-[16/10] w-full overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:aspect-auto md:h-[420px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={main.src} alt={`${address}, photo 1`} onError={() => markBroken(main.src)} className="h-full w-full object-cover transition group-hover:scale-[1.01]" />
+          <img src={main.src} data-src={main.src} alt={`${address}, photo 1`} onError={() => markBroken(main.src)} className="h-full w-full object-cover transition group-hover:scale-[1.01]" />
           {main.credit && <span className="absolute bottom-2 left-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white">{main.credit}</span>}
           <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium shadow">
             <Expand className="size-3" aria-hidden /> {visible.length} photo{visible.length === 1 ? "" : "s"}
           </span>
         </button>
-        {side.length > 0 && (
+        {pair && (
+          <button type="button" onClick={() => { setIndex(1); setOpen(true); }} aria-label="Open photo 2"
+            className="relative hidden h-[420px] overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={side[0].src} data-src={side[0].src} alt="" loading="lazy" onError={() => markBroken(side[0].src)} className="h-full w-full object-cover" />
+            {side[0].credit && <span className="absolute bottom-2 left-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white">{side[0].credit}</span>}
+          </button>
+        )}
+        {!pair && side.length > 0 && (
           <div className="hidden grid-cols-2 gap-2 md:grid">
             {side.map((s, i) => (
               <button key={s.src} type="button" onClick={() => { setIndex(i + 1); setOpen(true); }} aria-label={`Open photo ${i + 2}`}
                 className="relative h-[206px] overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.thumb} alt="" loading="lazy" onError={() => markBroken(s.src)} className="h-full w-full object-cover" />
+                <img src={s.thumb} data-src={s.src} alt="" loading="lazy" onError={() => markBroken(s.src)} className="h-full w-full object-cover" />
               </button>
             ))}
           </div>
@@ -96,7 +113,7 @@ export function Gallery({ propertyId, photos, address }: { propertyId: string; p
                 <button key={s.src} type="button" onClick={() => setIndex(i)} aria-label={`Photo ${i + 1}`} aria-current={i === index}
                   className={cn("h-14 w-20 shrink-0 overflow-hidden rounded opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", i === index && "opacity-100 ring-2 ring-white")}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={s.thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  <img src={s.thumb} data-src={s.src} alt="" loading="lazy" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export function PhotoPlaceholder({ className, label = "No photo yet" }: { className?: string; label?: string }) {
   return (
     <div className={cn("relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-secondary to-accent", className)}>
-      <svg aria-hidden className="absolute inset-0 h-full w-full text-primary/10" viewBox="0 0 100 60" preserveAspectRatio="none">
+      <svg aria-hidden className="absolute inset-0 h-full w-full text-plat/10" viewBox="0 0 100 60" preserveAspectRatio="none">
         <defs>
           <pattern id="omf-grid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M10 0H0V10" fill="none" stroke="currentColor" strokeWidth="0.4" />
@@ -16,7 +16,7 @@ export function PhotoPlaceholder({ className, label = "No photo yet" }: { classN
         </defs>
         <rect width="100" height="60" fill="url(#omf-grid)" />
       </svg>
-      <div className="relative flex flex-col items-center gap-1 text-primary/70">
+      <div className="relative flex flex-col items-center gap-1 text-plat/70">
         <Home className="size-8" aria-hidden />
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
       </div>

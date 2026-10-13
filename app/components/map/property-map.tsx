@@ -4,24 +4,24 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import maplibregl, { type GeoJSONSource, type LngLatBoundsLike, type Map as MLMap, type PointLike } from "maplibre-gl";
 import { type MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import { Layers, Minus, Plus } from "lucide-react";
-import { MAP_ACCENT, MAP_STYLE, milesToDegrees } from "@/lib/map";
+import { MAP_COLORS, MAP_STYLE, milesToDegrees } from "@/lib/map";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Area, Layer, MapPoint } from "@/lib/search/types";
 import { cn } from "@/lib/utils";
 
-// Pins by source, matching the card badges (tax deed = accent, HUD = ink)
+// Pins by source, matching the card badges (ops/design-brief.md: deed = seal orange, HUD = federal blue)
 const COLORS = {
-  taxDeed: MAP_ACCENT,
-  hud: "#1f2937",
-  cluster: MAP_ACCENT,
-  area: MAP_ACCENT,
+  taxDeed: MAP_COLORS.deed,
+  hud: MAP_COLORS.hud,
+  cluster: MAP_COLORS.ink,
+  area: MAP_COLORS.plat,
 };
 
 type BoundaryLayer = Exclude<Layer, "state">;
 const BOUNDARY_LAYERS: { id: BoundaryLayer; label: string; minZoom: number; color: string }[] = [
-  { id: "county", label: "County lines", minZoom: 0, color: "#6b7280" },
-  { id: "place", label: "City limits", minZoom: 8, color: "#7c3aed" },
-  { id: "zcta", label: "ZIP codes", minZoom: 9, color: "#db2777" },
+  { id: "county", label: "County lines", minZoom: 0, color: MAP_COLORS.ink },
+  { id: "place", label: "City limits", minZoom: 10, color: MAP_COLORS.plat },
+  { id: "zcta", label: "ZIP codes", minZoom: 10, color: MAP_COLORS.hud },
 ];
 
 const empty: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
@@ -84,7 +84,7 @@ export function PropertyMap(props: PropertyMapProps) {
         m.addLayer({ id: `b-${b.id}-fill`, type: "fill", source: `b-${b.id}`, minzoom: b.minZoom,
           paint: { "fill-color": b.color, "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.08, 0] } });
         m.addLayer({ id: `b-${b.id}-line`, type: "line", source: `b-${b.id}`, minzoom: b.minZoom,
-          paint: { "line-color": b.color, "line-opacity": 0.55, "line-width": b.id === "county" ? 1.2 : 0.8 } });
+          paint: { "line-color": b.color, "line-opacity": b.id === "county" ? 0.35 : 0.25, "line-width": b.id === "county" ? 1.2 : 0.8 } });
       }
       // Selected area (or radius): light fill + dashed outline, like Zillow
       m.addSource("area", { type: "geojson", data: empty });
@@ -108,7 +108,7 @@ export function PropertyMap(props: PropertyMapProps) {
           "circle-color": ["match", ["get", "source"], "hud", COLORS.hud, COLORS.taxDeed],
           "circle-radius": ["case", ["boolean", ["feature-state", "hover"], false], 10,
             ["boolean", ["feature-state", "selected"], false], 10, 7],
-          "circle-stroke-color": ["case", ["boolean", ["feature-state", "hover"], false], "#111827", "#fff"],
+          "circle-stroke-color": ["case", ["boolean", ["feature-state", "hover"], false], MAP_COLORS.ink, "#fff"],
           "circle-stroke-width": ["case", ["boolean", ["feature-state", "hover"], false], 3, 2],
         } });
 
@@ -283,13 +283,13 @@ export function PropertyMap(props: PropertyMapProps) {
               <legend className="sr-only">Boundary layers</legend>
               {BOUNDARY_LAYERS.map((b) => (
                 <label key={b.id} className="flex cursor-pointer items-center gap-2">
-                  <input type="checkbox" checked={enabled[b.id]} className="size-4 accent-[hsl(var(--primary))]"
+                  <input type="checkbox" checked={enabled[b.id]} className="size-4 accent-[hsl(var(--plat))]"
                     onChange={(e) => setEnabled((s) => ({ ...s, [b.id]: e.target.checked }))} />
                   <span className="inline-block h-0.5 w-4 rounded" style={{ background: b.color }} aria-hidden />
                   {b.label}
                 </label>
               ))}
-              <p className="text-xs text-muted-foreground">Cities show from zoom 8, ZIPs from zoom 9.</p>
+              <p className="text-xs text-muted-foreground">Cities and ZIPs appear as you zoom in.</p>
             </fieldset>
           )}
         </div>

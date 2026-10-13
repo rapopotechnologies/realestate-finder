@@ -7,8 +7,13 @@ export const MAP_STYLE = TILE_KEY
   ? `https://api.maptiler.com/maps/dataviz-light/style.json?key=${TILE_KEY}`
   : "https://tiles.openfreemap.org/styles/positron";
 
-/** The app accent (--primary) as a hex color, for map paint properties */
-export const MAP_ACCENT = "#0969a0";
+/** Design-brief colors as hex, for map paint properties (keep in sync with globals.css) */
+export const MAP_COLORS = {
+  plat: "#0B6B5A", // the app / places: selected area, property pin
+  deed: "#A84A12", // tax deed pins
+  hud: "#2C55A0", // HUD pins
+  ink: "#18211D", // clusters, county lines, hover ring
+} as const;
 
 /** Degrees of latitude / longitude spanned by `miles` at a given latitude (good enough for Florida-size areas) */
 export function milesToDegrees(miles: number, lat: number): { dLat: number; dLng: number } {

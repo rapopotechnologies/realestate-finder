@@ -71,6 +71,7 @@ export interface MapPoint {
 
 export interface SearchResult {
   total: number;
+  by_source: Partial<Record<Source, number>>;
   page: number;
   page_size: number;
   items: ListingItem[];

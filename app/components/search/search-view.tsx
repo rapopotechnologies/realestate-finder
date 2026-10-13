@@ -12,6 +12,7 @@ import type { Area, Coverage, Layer, ListingItem, SearchResult } from "@/lib/sea
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/property/property-card";
 import { CoverageBadge } from "./coverage-badge";
 import { FilterBar, SortSelect } from "./filter-bar";
@@ -239,9 +240,9 @@ export function SearchView({ lastSearch }: { lastSearch: string | null }) {
         {/* List */}
         <div ref={listRef} className={cn("min-h-0 overflow-y-auto bg-background", view === "list" ? "block" : "hidden lg:block")}>
           <div className="space-y-1 px-4 pb-2 pt-4 sm:px-6">
-            <h1 className="text-xl font-semibold">{title}</h1>
+            <h1 className="text-2xl">{title}</h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              {result && !loading && <span aria-live="polite">{result.total.toLocaleString()} propert{result.total === 1 ? "y" : "ies"}</span>}
+              {result && !loading && <span aria-live="polite">{resultCount(result)}</span>}
               <CoverageBadge coverage={coverage} />
               <span className="ml-auto"><SortSelect state={state} onChange={(s) => go(s)} /></span>
             </div>
@@ -250,7 +251,7 @@ export function SearchView({ lastSearch }: { lastSearch: string | null }) {
           {areaError ? (
             <EmptyState icon={SearchX} title="Area not found" body={areaError} />
           ) : error ? (
-            <EmptyState icon={AlertCircle} title="Something went wrong" body={error}
+            <EmptyState alert icon={AlertCircle} title="Something went wrong" body={error}
               action={<Button variant="outline" onClick={() => router.refresh()}>Try again</Button>} />
           ) : loading && !result ? (
             <div className="grid gap-4 px-4 pb-6 sm:grid-cols-2 sm:px-6">{Array.from({ length: 6 }, (_, i) => <PropertyCardSkeleton key={i} />)}</div>
@@ -299,21 +300,18 @@ export function SearchView({ lastSearch }: { lastSearch: string | null }) {
   );
 }
 
-function EmptyState({ icon: Icon, title, body, action }: { icon: typeof SearchX; title: string; body: string; action?: React.ReactNode }) {
-  return (
-    <div className="mx-4 my-8 flex flex-col items-center rounded-xl border border-dashed bg-card px-6 py-10 text-center sm:mx-6" role="status">
-      <Icon className="size-8 text-muted-foreground" aria-hidden />
-      <h2 className="mt-3 font-semibold">{title}</h2>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">{body}</p>
-      {action && <div className="mt-4">{action}</div>}
-    </div>
-  );
+/** "83 properties · 79 tax deeds · 4 HUD" (the breakdown only when both sources are present) */
+function resultCount(r: SearchResult) {
+  const total = `${r.total.toLocaleString()} propert${r.total === 1 ? "y" : "ies"}`;
+  const deeds = r.by_source?.tax_deed ?? 0;
+  const hud = r.by_source?.hud ?? 0;
+  return deeds && hud ? `${total} · ${deeds.toLocaleString()} tax deed${deeds === 1 ? "" : "s"} · ${hud} HUD` : total;
 }
 
 function Welcome({ locate, onLocate }: { locate: Locate; onLocate: () => void }) {
   return (
     <div className="mx-auto flex max-w-xl flex-col items-center px-4 py-16 text-center sm:py-24">
-      <h1 className="text-3xl font-bold">Where do you want to look?</h1>
+      <h1 className="text-3xl sm:text-4xl">Where do you want to look?</h1>
       <p className="mt-2 text-muted-foreground">
         {locate === "asking" ? "Finding properties near you…" : "Search a city, ZIP code, county or address in Florida."}
       </p>

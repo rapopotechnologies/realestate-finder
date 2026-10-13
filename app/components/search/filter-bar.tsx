@@ -57,6 +57,14 @@ export function FilterBar({ state, onChange, isArea }: {
         })}
       </div>
 
+      <label className="sr-only" htmlFor="f-when">When</label>
+      <select id="f-when" className={selectCls} value={f.withinDays ?? ""} onChange={(e) => set({ withinDays: e.target.value ? Number(e.target.value) : null })}>
+        <option value="">Any date</option>
+        <option value="7">Next 7 days</option>
+        <option value="30">Next 30 days</option>
+        <option value="90">Next 90 days</option>
+      </select>
+
       <label className="sr-only" htmlFor="f-pmin">Minimum price</label>
       <select id="f-pmin" className={selectCls} value={f.priceMin ?? ""} onChange={(e) => set({ priceMin: e.target.value ? Number(e.target.value) : null })}>
         <option value="">Min price</option>
@@ -91,7 +99,7 @@ export function FilterBar({ state, onChange, isArea }: {
         <label className="flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm">
           <span className="whitespace-nowrap">{isArea ? "+" : "Within"} {state.radiusMi} mi</span>
           <input type="range" min={5} max={50} step={5} value={state.radiusMi ?? 25}
-            aria-label="Radius in miles" className="w-24 accent-[hsl(var(--primary))]"
+            aria-label="Radius in miles" className="w-24 accent-[hsl(var(--plat))]"
             onChange={(e) => onChange({ ...state, radiusMi: Number(e.target.value), page: 1 })} />
         </label>
       )}
@@ -104,7 +112,7 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   return (
     <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
       className={cn("h-9 shrink-0 whitespace-nowrap rounded-full border px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        checked ? "border-primary bg-accent text-accent-foreground" : "bg-background hover:bg-accent")}>
+        checked ? "border-plat bg-accent text-accent-foreground" : "bg-background hover:bg-accent")}>
       {label}
     </button>
   );

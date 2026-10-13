@@ -17,8 +17,8 @@ export function BottomNav() {
             <li key={href}>
               <Link href={href} aria-current={active ? "page" : undefined}
                 className={cn("flex h-16 flex-col items-center justify-center gap-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                  active ? "text-primary" : "text-muted-foreground")}>
-                <Icon className={cn("size-5", active && "fill-primary/10")} aria-hidden />
+                  active ? "text-plat" : "text-muted-foreground")}>
+                <Icon className={cn("size-5", active && "fill-plat/10")} aria-hidden />
                 {label}
               </Link>
             </li>

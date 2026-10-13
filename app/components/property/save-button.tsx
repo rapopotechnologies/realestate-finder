@@ -46,7 +46,7 @@ export function SaveButton({ propertyId, saved: initial, className, label }: {
         className
       )}
     >
-      <Heart className={cn("size-4", saved && "fill-rose-500 text-rose-500")} aria-hidden />
+      <Heart className={cn("size-4", saved && "fill-plat text-plat")} aria-hidden />
       {label && <span className="pr-1 text-sm font-medium">{saved ? "Saved" : label}</span>}
     </button>
   );
