@@ -110,6 +110,14 @@ which is the hard part.
 | Pro (~$99/mo) | full-time / teams | everything + skip-trace and mail credits, surplus list, API-lite exports |
 | Credits | anyone | skip traces, mailed letters, property checks: pay per use (resume-optimizer's credits system) |
 
+## Deal CRM (inside My List)
+
+Phase 1 built 2026-10-12: strategy per deal (wholesale / flip / BRRRR / rental), offer log with responses and
+counters ("Offered $45,000 · countered $60,000"), contact log (call / text / email / letter / visit + result),
+follow-up dates, stages through Under contract and Closed. Next: per-strategy calculators (70% rule MAO,
+flip profit, BRRRR cash left in deal / cash-on-cash), follow-up reminder emails, documents and people on a deal.
+It's the stickiest part of a subscription: once someone's deals live here, they stay.
+
 ## What to do first
 
 1. Remodel rows 1–2 (honest numbers, Account + navigation). Trust before growth.

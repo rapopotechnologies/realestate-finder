@@ -13,6 +13,7 @@ export interface PropertyDetail {
   sales: Tables<"property_sales">[];
   saved: Tables<"saved_properties"> | null;
   notes: Tables<"notes">[];
+  events: Tables<"deal_events">[];
   contacts: Tables<"contacts">[];
 }
 
@@ -23,7 +24,7 @@ export async function loadProperty(id: string): Promise<PropertyDetail | null> {
   const { data: property } = await supabase.from("properties").select("*").eq("id", id).maybeSingle();
   if (!property) return null;
 
-  const [county, owner, auctions, hud, photos, sales, saved, notes, contacts] = await Promise.all([
+  const [county, owner, auctions, hud, photos, sales, saved, notes, events, contacts] = await Promise.all([
     property.county_fips
       ? supabase.from("counties").select("fips, county_name, state, auction_base_url").eq("fips", property.county_fips).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -34,6 +35,7 @@ export async function loadProperty(id: string): Promise<PropertyDetail | null> {
     supabase.from("property_sales").select("*").eq("property_id", id).order("sale_date", { ascending: false }),
     supabase.from("saved_properties").select("*").eq("property_id", id).maybeSingle(),
     supabase.from("notes").select("*").eq("property_id", id).order("created_at", { ascending: false }),
+    supabase.from("deal_events").select("*").eq("property_id", id).order("occurred_at", { ascending: false }),
     supabase.from("contacts").select("*").eq("property_id", id).order("retrieved_at", { ascending: false }),
   ]);
 
@@ -69,6 +71,7 @@ export async function loadProperty(id: string): Promise<PropertyDetail | null> {
     sales: sales.data ?? [],
     saved: saved.data ?? null,
     notes: notes.data ?? [],
+    events: events.data ?? [],
     contacts: contacts.data ?? [],
   };
 }

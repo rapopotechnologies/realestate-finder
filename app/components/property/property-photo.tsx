@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +39,11 @@ export function PropertyPhoto({ src, propertyId, photoSource, alt, className, si
   size?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  const img = useRef<HTMLImageElement>(null);
+  // A server-rendered <img> can fail before hydration attaches onError: check once mounted
+  useEffect(() => {
+    if (img.current?.complete && img.current.naturalWidth === 0) setFailed(true);
+  }, []);
   const google = propertyId && (photoSource === "streetview" || photoSource === "satellite");
   const url = src ?? (google ? `/api/streetview/${propertyId}?size=${size}${photoSource === "satellite" ? "&kind=satellite" : ""}` : null);
 
@@ -46,7 +51,7 @@ export function PropertyPhoto({ src, propertyId, photoSource, alt, className, si
   return (
     <div className={cn("relative overflow-hidden bg-muted", className)}>
       {/* eslint-disable-next-line @next/next/no-img-element -- signed / proxied URLs, already sized */}
-      <img src={url} alt={alt} loading="lazy" onError={() => setFailed(true)} className="h-full w-full object-cover" />
+      <img ref={img} src={url} alt={alt} loading="lazy" onError={() => setFailed(true)} className="h-full w-full object-cover" />
       {google && (
         <span className="absolute bottom-1 right-1 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
           Image: Google

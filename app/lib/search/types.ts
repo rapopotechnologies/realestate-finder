@@ -1,5 +1,7 @@
 // Shapes returned by the search RPCs (see supabase/migrations/*_search_rpcs.sql)
 
+import type { Stage } from "@/lib/deals";
+
 export type Layer = "state" | "county" | "place" | "zcta";
 export type Source = "tax_deed" | "hud";
 export type DealTier = "great" | "good" | "fair";
@@ -82,4 +84,4 @@ export interface Coverage {
   hud: "tracked" | "unsupported";
 }
 
-export type SavedStatus = "interested" | "contacted" | "offer_made" | "passed";
+export type SavedStatus = Stage;

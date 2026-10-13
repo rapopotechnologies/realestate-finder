@@ -10,7 +10,7 @@ import { DealChip, SourceBadge } from "@/components/property/badges";
 import { Gallery } from "@/components/property/gallery";
 import { OwnerPanel } from "@/components/property/owner-panel";
 import { SaveButton } from "@/components/property/save-button";
-import { StatusAndNotes } from "@/components/property/status-notes";
+import { DealPanel } from "@/components/deals/deal-panel";
 import { DetailMapLazy } from "@/components/property/detail-map-lazy";
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
@@ -211,9 +211,9 @@ export default async function PropertyPage({ params }: { params: { id: string } 
 
         {/* Sidebar */}
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-          <section aria-labelledby="mine-heading" className="rounded-xl border bg-card p-5 shadow-sm">
-            <h2 id="mine-heading" className="mb-3 font-semibold">My list</h2>
-            <StatusAndNotes propertyId={p.id} saved={d.saved} notes={d.notes} />
+          <section aria-labelledby="deal-heading" className="rounded-xl border bg-card p-5 shadow-sm">
+            <h2 id="deal-heading" className="mb-3 font-semibold">Your deal</h2>
+            <DealPanel propertyId={p.id} saved={d.saved} events={d.events} notes={d.notes} />
           </section>
           <section aria-labelledby="links-heading" className="rounded-xl border bg-card p-5">
             <h2 id="links-heading" className="mb-3 font-semibold">Official sources</h2>

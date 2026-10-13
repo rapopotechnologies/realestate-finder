@@ -302,6 +302,62 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_events: {
+        Row: {
+          body: string | null
+          counter_amount: number | null
+          created_at: string
+          id: string
+          kind: string
+          occurred_at: string
+          offer_amount: number | null
+          offer_response: string | null
+          offer_terms: string | null
+          offer_to: string | null
+          outcome: string | null
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          counter_amount?: number | null
+          created_at?: string
+          id?: string
+          kind: string
+          occurred_at?: string
+          offer_amount?: number | null
+          offer_response?: string | null
+          offer_terms?: string | null
+          offer_to?: string | null
+          outcome?: string | null
+          property_id: string
+          user_id?: string
+        }
+        Update: {
+          body?: string | null
+          counter_amount?: number | null
+          created_at?: string
+          id?: string
+          kind?: string
+          occurred_at?: string
+          offer_amount?: number | null
+          offer_response?: string | null
+          offer_terms?: string | null
+          offer_to?: string | null
+          outcome?: string | null
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_events_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geocodes: {
         Row: {
           created_at: string
@@ -754,25 +810,31 @@ export type Database = {
       saved_properties: {
         Row: {
           created_at: string
+          next_follow_up: string | null
           position: number
           property_id: string
           status: string
+          strategy: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          next_follow_up?: string | null
           position?: number
           property_id: string
           status?: string
+          strategy?: string
           updated_at?: string
           user_id?: string
         }
         Update: {
           created_at?: string
+          next_follow_up?: string | null
           position?: number
           property_id?: string
           status?: string
+          strategy?: string
           updated_at?: string
           user_id?: string
         }
