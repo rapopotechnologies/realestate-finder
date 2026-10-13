@@ -1,6 +1,19 @@
 "use client";
 
 import { PROPERTY_TYPES, SORTS, type SearchState } from "@/lib/search/state";
+
+/** Sort lives on the results line (not in the filter row) so the filters fit at laptop width */
+export function SortSelect({ state, onChange }: { state: SearchState; onChange: (next: SearchState) => void }) {
+  return (
+    <label className="inline-flex items-center gap-1.5 text-sm">
+      <span className="text-muted-foreground">Sort:</span>
+      <select value={state.sort} onChange={(e) => onChange({ ...state, sort: e.target.value as SearchState["sort"], page: 1 })}
+        className="rounded-md bg-transparent py-1 pr-1 font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+      </select>
+    </label>
+  );
+}
 import type { Source } from "@/lib/search/types";
 import { cn } from "@/lib/utils";
 
@@ -83,12 +96,6 @@ export function FilterBar({ state, onChange, isArea }: {
         </label>
       )}
 
-      <div className="ml-auto shrink-0 pl-2">
-        <label className="sr-only" htmlFor="f-sort">Sort</label>
-        <select id="f-sort" className={selectCls} value={state.sort} onChange={(e) => onChange({ ...state, sort: e.target.value as SearchState["sort"], page: 1 })}>
-          {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-      </div>
     </div>
   );
 }

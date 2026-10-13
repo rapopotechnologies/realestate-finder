@@ -69,7 +69,7 @@ export default async function PropertyPage({ params }: { params: { id: string } 
           <section aria-labelledby="price-heading" className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               {source && <SourceBadge source={source} date={eventDate} />}
-              <DealChip tier={tier} ratio={ratio} />
+              <DealChip source={source} tier={tier} ratio={ratio} />
               {auction && CLOSED.test(auction.status) && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">{auction.status}</span>}
               {hud && hud.status !== "active" && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">{hud.status === "under_contract" ? "Under contract" : "No longer listed"}</span>}
             </div>
@@ -80,8 +80,9 @@ export default async function PropertyPage({ params }: { params: { id: string } 
               </h1>
               {p.market_value != null && (
                 <p className="text-sm text-muted-foreground">
-                  Est. value <span className="font-semibold text-foreground">{money(p.market_value)}</span>
-                  {ratio != null && <> · price is {Math.round(ratio * 100)}% of value</>}
+                  <abbr title="The county property appraiser's just (market) value" className="no-underline">County value</abbr>{" "}
+                  <span className="font-semibold text-foreground">{money(p.market_value)}</span>
+                  {ratio != null && <> · {source === "tax_deed" ? "opening bid" : "list price"} is {Math.round(ratio * 100)}% of it</>}
                 </p>
               )}
             </div>

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/property/property-card";
 import { CoverageBadge } from "./coverage-badge";
-import { FilterBar } from "./filter-bar";
+import { FilterBar, SortSelect } from "./filter-bar";
 import { SearchBox } from "./search-box";
 
 // MapLibre touches window: load it in the browser only
@@ -197,7 +197,8 @@ export function SearchView({ lastSearch }: { lastSearch: string | null }) {
   const selectedPoint = selectedId && !selected ? result?.points.find((p) => p.listing_id === selectedId) ?? null : null;
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] flex-col">
+    // Below md the bottom bar takes another 4rem
+    <div className="flex h-[calc(100dvh-8rem)] flex-col md:h-[calc(100dvh-4rem)]">
       <div className="border-b bg-card">
         <FilterBar state={state} onChange={(s) => go(s)} isArea={state.area.kind === "area"} />
       </div>
@@ -242,6 +243,7 @@ export function SearchView({ lastSearch }: { lastSearch: string | null }) {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
               {result && !loading && <span aria-live="polite">{result.total.toLocaleString()} propert{result.total === 1 ? "y" : "ies"}</span>}
               <CoverageBadge coverage={coverage} />
+              <span className="ml-auto"><SortSelect state={state} onChange={(s) => go(s)} /></span>
             </div>
           </div>
 

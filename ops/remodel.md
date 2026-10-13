@@ -98,9 +98,9 @@ official links, notes, owner panel with the Do-Not-Call notice.
 
 Each row ships on its own and leaves the app better.
 
-1. **Honest numbers (S1, S2, P4, F1).** Remove misleading chips for tax deeds, relabel values, default sort to
+1. ✅ *2026-10-12* **Honest numbers (S1, S2, P4, F1).** Remove misleading chips for tax deeds, relabel values, default sort to
    soonest, truthful landing copy. Small; highest trust impact.
-2. **Navigation and Account (A1, A2, X1, S3).** `/account` with change password; phone bottom bar; filter row fits.
+2. ✅ *2026-10-12* **Navigation and Account (A1, A2, X1, S3).** `/account` with change password; phone bottom bar; filter row fits.
 3. **Property, reordered for the decision (P1, P3, P2).** Owner + redemption up top; "How this auction works".
 4. **Search for planners (S4, S5, S6, S7, S11).** Date filter, countdowns, cluster colors, quieter outlines.
 5. **Front door that shows the product (F2, F3, F4, F5).** Public preview, sign-up with password, FAQ.

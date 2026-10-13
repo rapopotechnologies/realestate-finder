@@ -8,6 +8,12 @@ operations.
 - `scraper/`: Python 3.11 + Playwright adapters (`omf/`), run daily by `.github/workflows/scrape.yml`.
 - `supabase/migrations/`: Postgres + PostGIS schema, RLS, RPCs. Project ref `xpvdodiadtycfyismcpl`.
 
+## Rooms
+
+Three in-app rooms, same names and order in the header (desktop) and the bottom bar (phones):
+Search `/search` (property pages belong to it), My List `/my-list`, Account `/account` (Admin lives here).
+Defined once in `app/components/layout/nav-items.ts`. Don't add a fourth; put new things in a room.
+
 ## Code style: descriptive, simple, efficient
 
 Write every change the way a very senior engineer would; `/ponytail` applies the full checklist to existing code.

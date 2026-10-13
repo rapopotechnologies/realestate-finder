@@ -44,16 +44,18 @@ export const PropertyCard = forwardRef<HTMLElement, {
         <div className="space-y-1.5 p-3">
           <div className="flex flex-wrap items-center gap-1.5">
             <SourceBadge source={item.source} date={item.event_date} />
-            <DealChip tier={item.deal_tier} ratio={item.value_ratio} />
+            <DealChip source={item.source} tier={item.deal_tier} ratio={item.value_ratio} />
             {item.is_closed && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{item.listing_status}</span>}
           </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="text-xl font-bold tracking-tight">
+          <div>
+            <p className="whitespace-nowrap text-xl font-bold tracking-tight">
               {money(item.price)}
-              <span className="sr-only">{item.source === "tax_deed" ? " opening bid" : " list price"}</span>
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">{item.source === "tax_deed" ? "opening bid" : "list price"}</span>
             </p>
             {item.market_value != null && (
-              <p className="text-xs text-muted-foreground">Est. value {money(item.market_value)}</p>
+              <p className="text-xs text-muted-foreground" title="The county property appraiser's just (market) value">
+                County value {money(item.market_value)}
+              </p>
             )}
           </div>
           {facts.length > 0 && <p className="text-sm">{facts.join(" · ")}</p>}

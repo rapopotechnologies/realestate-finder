@@ -3,7 +3,7 @@ import { MapPinned } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
-/** compact: icon only on small screens (the header needs the room for search) */
+/** compact: icon only below desktop width (the header needs the room for search) */
 export function Logo({ href = "/", compact = false }: { href?: string; compact?: boolean }) {
   return (
     <Link href={href} aria-label={BRAND_NAME}
@@ -11,7 +11,7 @@ export function Logo({ href = "/", compact = false }: { href?: string; compact?:
       <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
         <MapPinned className="size-4" aria-hidden />
       </span>
-      <span className={cn(compact && "max-md:hidden")}>{BRAND_NAME}</span>
+      <span className={cn(compact && "max-lg:hidden")}>{BRAND_NAME}</span>
     </Link>
   );
 }

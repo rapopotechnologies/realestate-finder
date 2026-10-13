@@ -26,6 +26,13 @@ describe("search URL state", () => {
     expect(serializeSearch(parse("lat=28.5&lng=-81.7&near=1"))).toBe("lat=28.50000&lng=-81.70000&near=1");
   });
 
+  it("sorts areas by soonest event and points by distance unless asked", () => {
+    expect(parse("county=12069").sort).toBe("date");
+    expect(parse("lat=28.5&lng=-81.7").sort).toBe("distance");
+    expect(serializeSearch(parse("county=12069&sort=deal"))).toBe("county=12069&sort=deal");
+    expect(serializeSearch(parse("county=12069&sort=date"))).toBe("county=12069");
+  });
+
   it("builds RPC arguments", () => {
     expect(rpcArgs(parse("county=12069&src=tax_deed&beds=2"), null)).toMatchObject({
       p_area_layer: "county", p_area_geoid: "12069",

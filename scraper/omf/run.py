@@ -2,6 +2,7 @@
 
     python -m omf.run all                          # tax deeds (active counties) + HUD + photos
     python -m omf.run taxdeeds --counties 12069    # one county: auctions -> NAL/appraiser -> geocode
+    python -m omf.run taxdeeds --months-back 6     # also past auction days (backfills sold prices)
     python -m omf.run hud                          # HUD for every state with an active county
     python -m omf.run photos
     python -m omf.run activate 12069 12095         # start tracking counties
@@ -49,10 +50,10 @@ def active_counties(db: DB, only: list[str] | None) -> list[dict]:
     return db.select("counties", params)
 
 
-def taxdeeds(db: DB, only: list[str] | None) -> None:
+def taxdeeds(db: DB, only: list[str] | None, months_back: int = 0) -> None:
     for c in active_counties(db, only):
         log.info("── %s County (%s)", c["county_name"], c["fips"])
-        run_adapter(db, RealAuctionTaxDeed(c))
+        run_adapter(db, RealAuctionTaxDeed(c, months_back=months_back))
         _step(db, "enrich", c["fips"], enrich_county, db, c)
         _step(db, "geocode", c["fips"], geocode_pending, db, c["fips"])
         _step(db, "streetview", c["fips"], streetview_check, db, c["fips"])
@@ -100,6 +101,7 @@ def main() -> None:
     p.add_argument("command", choices=["all", "taxdeeds", "hud", "photos", "activate", "report"])
     p.add_argument("fips", nargs="*", help="county FIPS codes (activate)")
     p.add_argument("--counties", nargs="*", help="limit tax deeds to these FIPS codes")
+    p.add_argument("--months-back", type=int, default=0, help="also scrape past auction days (backfills sold prices)")
     a = p.parse_args()
     db = DB()
 
@@ -108,13 +110,13 @@ def main() -> None:
             db.update("counties", {"fips": f}, {"is_active": True})
         print([c["county_name"] for c in active_counties(db, a.fips)])
     elif a.command == "taxdeeds":
-        taxdeeds(db, a.counties)
+        taxdeeds(db, a.counties, a.months_back)
     elif a.command == "hud":
         hud(db)
     elif a.command == "photos":
         photos(db)
     elif a.command == "all":
-        taxdeeds(db, a.counties)
+        taxdeeds(db, a.counties, a.months_back)
         hud(db)
         photos(db)
     if a.command in ("all", "taxdeeds", "report"):

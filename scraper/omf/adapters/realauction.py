@@ -12,7 +12,8 @@ Auction day: /index.cfm?zaction=AUCTION&Zmethod=PREVIEW&AUCTIONDATE=MM/DD/YYYY
 import logging
 import re
 import time
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from playwright.sync_api import Page, sync_playwright
 
@@ -57,14 +58,23 @@ def _money(s: str | None) -> float | None:
     return float(m) if m else None
 
 
+def _sold_time(s: str | None) -> str | None:
+    """'09/10/2026 10:11 AM ET' -> ISO timestamp (sites post Eastern time)."""
+    m = re.match(r"(\d{2}/\d{2}/\d{4} \d{1,2}:\d{2} [AP]M)", s or "")
+    if not m:
+        return None
+    return datetime.strptime(m.group(1), "%m/%d/%Y %I:%M %p").replace(tzinfo=ZoneInfo("America/New_York")).isoformat()
+
+
 class RealAuctionTaxDeed(Adapter):
     name = "realauction"
 
-    def __init__(self, county: dict, months_ahead: int = 3, today: date | None = None):
+    def __init__(self, county: dict, months_ahead: int = 3, months_back: int = 0, today: date | None = None):
         self.county = county
         self.county_fips = county["fips"]
         self.base = county["auction_base_url"].rstrip("/")
         self.months_ahead = months_ahead
+        self.months_back = months_back  # > 0 backfills past auction days (sold prices)
         self.today = today or date.today()
         self._pw = None
         self._browser = None
@@ -108,10 +118,10 @@ class RealAuctionTaxDeed(Adapter):
 
     # ── adapter steps ────────────────────────────────────────────────────────
     def discover(self):
-        """Auction days with tax deed sales in the current month plus the next N."""
+        """Auction days with tax deed sales from N months back through the current month plus the next N."""
         y, m = self.today.year, self.today.month
         seen = set()
-        for i in range(self.months_ahead + 1):
+        for i in range(-self.months_back, self.months_ahead + 1):
             mm, yy = (m - 1 + i) % 12 + 1, y + (m - 1 + i) // 12
             self._goto(f"{self.base}/index.cfm?zaction=USER&zmethod=CALENDAR&selCalDate={mm:02d}/01/{yy}", 2500)
             boxes = self.page.eval_on_selector_all(
@@ -186,13 +196,18 @@ class RealAuctionTaxDeed(Adapter):
             raise ValueError("auction item without a case number")
 
         label, value = stat.get("MSGA", ""), stat.get("MSGB", "")
-        detail = None
+        detail = sold_amount = sold_to = sold_at = None
         if "start" in label.lower():
             status = "Scheduled"
         elif "sold" in label.lower():
+            # "Auction Sold" | "09/10/2026 10:11 AM ET" | "Amount" "$42,200.00" | "Sold To" "3rd Party Bidder"
             status = "Sold"
             parts = [stat.get("MSGC", ""), stat.get("MSGD", ""), stat.get("MSG_SOLDTO_Label", ""), stat.get("MSG_SOLDTO_MSG", "")]
             detail = " ".join(p for p in parts if p) or None
+            if stat.get("MSGC", "").lower() == "amount":
+                sold_amount = _money(stat.get("MSGD"))
+            sold_to = stat.get("MSG_SOLDTO_MSG") or None
+            sold_at = _sold_time(value)
         elif value or label:
             status = value or label
         else:
@@ -217,6 +232,9 @@ class RealAuctionTaxDeed(Adapter):
             "auction_url": raw["url"],
             "appraiser_url": raw.get("links", {}).get("Parcel ID"),
             "assessed_value": _money(f.get("Assessed Value")),
+            "sold_amount": sold_amount,
+            "sold_to": sold_to,
+            "sold_at": sold_at,
             "last_seen": now_iso(),
         }
 

@@ -102,6 +102,9 @@ export type Database = {
           parcel_id_norm: string | null
           property_address: string | null
           property_id: string | null
+          sold_amount: number | null
+          sold_at: string | null
+          sold_to: string | null
           status: string
           status_detail: string | null
           updated_at: string
@@ -123,6 +126,9 @@ export type Database = {
           parcel_id_norm?: string | null
           property_address?: string | null
           property_id?: string | null
+          sold_amount?: number | null
+          sold_at?: string | null
+          sold_to?: string | null
           status: string
           status_detail?: string | null
           updated_at?: string
@@ -144,6 +150,9 @@ export type Database = {
           parcel_id_norm?: string | null
           property_address?: string | null
           property_id?: string | null
+          sold_amount?: number | null
+          sold_at?: string | null
+          sold_to?: string | null
           status?: string
           status_detail?: string | null
           updated_at?: string
@@ -900,6 +909,7 @@ export type Database = {
         Returns: number
       }
       normalize_parcel_id: { Args: { p: string }; Returns: string }
+      public_stats: { Args: never; Returns: Json }
       refresh_property_areas: { Args: never; Returns: number }
       search_properties: {
         Args: {

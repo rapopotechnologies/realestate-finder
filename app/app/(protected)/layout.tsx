@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { Header } from "@/components/layout/header";
 import { timeAgo } from "@/lib/format";
 
@@ -8,15 +9,14 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: updated }, { data: isAdmin }] = await Promise.all([
-    supabase.rpc("data_updated_at"),
-    supabase.rpc("is_admin"),
-  ]);
+  const { data: updated } = await supabase.rpc("data_updated_at");
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header email={user.email ?? null} dataUpdated={timeAgo(updated as string | null)} isAdmin={!!isAdmin} />
-      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
+      <Header dataUpdated={timeAgo(updated as string | null)} />
+      {/* pb-16: room for the phone bottom bar */}
+      <main id="main" tabIndex={-1} className="flex-1 pb-16 focus:outline-none md:pb-0">{children}</main>
+      <BottomNav />
     </div>
   );
 }

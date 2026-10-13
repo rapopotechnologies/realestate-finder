@@ -9,10 +9,11 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Area, Layer, MapPoint } from "@/lib/search/types";
 import { cn } from "@/lib/utils";
 
+// Pins by source, matching the card badges (tax deed = accent, HUD = ink)
 const COLORS = {
-  great: "#1f7a4d", // --deal-great
-  good: "#b45309", // --deal-good
-  other: MAP_ACCENT,
+  taxDeed: MAP_ACCENT,
+  hud: "#1f2937",
+  cluster: MAP_ACCENT,
   area: MAP_ACCENT,
 };
 
@@ -97,14 +98,14 @@ export function PropertyMap(props: PropertyMapProps) {
       // Pins, clustered when zoomed out
       m.addSource("pts", { type: "geojson", data: empty, cluster: true, clusterRadius: 44, clusterMaxZoom: 13, promoteId: "listing_id" });
       m.addLayer({ id: "clusters", type: "circle", source: "pts", filter: ["has", "point_count"],
-        paint: { "circle-color": COLORS.other, "circle-opacity": 0.88, "circle-stroke-color": "#fff", "circle-stroke-width": 2,
+        paint: { "circle-color": COLORS.cluster, "circle-opacity": 0.88, "circle-stroke-color": "#fff", "circle-stroke-width": 2,
           "circle-radius": ["step", ["get", "point_count"], 14, 10, 18, 50, 24] } });
       m.addLayer({ id: "cluster-count", type: "symbol", source: "pts", filter: ["has", "point_count"],
         layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 12, "text-font": ["Noto Sans Bold"] },
         paint: { "text-color": "#fff" } });
       m.addLayer({ id: "pin", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]],
         paint: {
-          "circle-color": ["match", ["get", "deal_tier"], "great", COLORS.great, "good", COLORS.good, COLORS.other],
+          "circle-color": ["match", ["get", "source"], "hud", COLORS.hud, COLORS.taxDeed],
           "circle-radius": ["case", ["boolean", ["feature-state", "hover"], false], 10,
             ["boolean", ["feature-state", "selected"], false], 10, 7],
           "circle-stroke-color": ["case", ["boolean", ["feature-state", "hover"], false], "#111827", "#fff"],
@@ -253,7 +254,7 @@ export function PropertyMap(props: PropertyMapProps) {
       features: points.map((p) => ({
         type: "Feature",
         geometry: { type: "Point", coordinates: [p.lng, p.lat] },
-        properties: { listing_id: p.listing_id, deal_tier: p.deal_tier ?? "none" },
+        properties: { listing_id: p.listing_id, source: p.source },
       })),
     });
   }, [ready, points]);
@@ -295,9 +296,8 @@ export function PropertyMap(props: PropertyMapProps) {
       </div>
       {/* Legend */}
       <div className="pointer-events-none absolute bottom-6 left-3 hidden gap-3 rounded-lg border bg-card/95 px-3 py-1.5 text-xs shadow-sm sm:flex">
-        <LegendDot color={COLORS.great} label="Great deal" />
-        <LegendDot color={COLORS.good} label="Good deal" />
-        <LegendDot color={COLORS.other} label="Other" />
+        <LegendDot color={COLORS.taxDeed} label="Tax deed" />
+        <LegendDot color={COLORS.hud} label="HUD home" />
       </div>
     </div>
   );

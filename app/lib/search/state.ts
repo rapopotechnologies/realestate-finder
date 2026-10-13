@@ -36,8 +36,8 @@ export interface SearchState {
 
 export const DEFAULT_RADIUS = 25;
 export const SORTS: { value: Sort; label: string }[] = [
-  { value: "deal", label: "Best deal" },
   { value: "date", label: "Soonest auction / deadline" },
+  { value: "deal", label: "Lowest price vs county value" },
   { value: "price_asc", label: "Price: low to high" },
   { value: "price_desc", label: "Price: high to low" },
   { value: "distance", label: "Distance" },
@@ -57,6 +57,11 @@ export const PROPERTY_TYPES: { value: string; label: string }[] = [
 
 const num = (v: string | null) => (v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : null);
 
+/** Nearest first around a point; otherwise what's happening soonest */
+function defaultSort(area: AreaRef): Sort {
+  return area.kind === "point" ? "distance" : "date";
+}
+
 export function parseSearch(p: URLSearchParams): SearchState {
   let area: AreaRef = { kind: "none" };
   if (p.get("county")) area = { kind: "area", layer: "county", geoid: p.get("county")! };
@@ -67,7 +72,7 @@ export function parseSearch(p: URLSearchParams): SearchState {
     area = { kind: "point", lat: num(p.get("lat"))!, lng: num(p.get("lng"))!, near: p.get("near") === "1", label: p.get("q") ?? undefined };
 
   const src = (p.get("src") ?? "").split(",").filter((s): s is Source => s === "tax_deed" || s === "hud");
-  const sort = (p.get("sort") as Sort) || (area.kind === "point" ? "distance" : "deal");
+  const sort = (p.get("sort") as Sort) || defaultSort(area);
   return {
     area,
     radiusMi: num(p.get("r")) ?? (area.kind === "point" ? DEFAULT_RADIUS : null),
@@ -80,7 +85,7 @@ export function parseSearch(p: URLSearchParams): SearchState {
       hasBuilding: p.get("bldg") === "1",
       showClosed: p.get("closed") === "1",
     },
-    sort: SORTS.some((s) => s.value === sort) ? sort : "deal",
+    sort: SORTS.some((s) => s.value === sort) ? sort : defaultSort(area),
     page: Math.max(1, num(p.get("page")) ?? 1),
   };
 }
@@ -110,8 +115,7 @@ export function serializeSearch(s: SearchState): string {
   if (f.bedsMin != null) p.set("beds", String(f.bedsMin));
   if (f.hasBuilding) p.set("bldg", "1");
   if (f.showClosed) p.set("closed", "1");
-  const defaultSort = a.kind === "point" ? "distance" : "deal";
-  if (s.sort !== defaultSort) p.set("sort", s.sort);
+  if (s.sort !== defaultSort(a)) p.set("sort", s.sort);
   if (s.page > 1) p.set("page", String(s.page));
   // Commas are fine in a query string; keep "city=Clermont,FL" readable for sharing
   return p.toString().replace(/%2C/gi, ",");

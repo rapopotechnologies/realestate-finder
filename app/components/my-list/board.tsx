@@ -119,7 +119,7 @@ function SavedCard({ item, onMove }: { item: SavedItem; onMove: (id: string, s: 
           {facts && <p className="text-xs">{facts}</p>}
           <div className="mt-1 flex flex-wrap gap-1">
             {item.source && <SourceBadge source={item.source} date={item.eventDate} className="text-[10px]" />}
-            <DealChip tier={dealTier(item.price, item.marketValue)} className="text-[10px]" />
+            <DealChip source={item.source} tier={dealTier(item.price, item.marketValue)} className="text-[10px]" />
           </div>
         </div>
         <button type="button" {...listeners} {...attributes} aria-label={`Drag ${item.address ?? "property"} to another column`}
